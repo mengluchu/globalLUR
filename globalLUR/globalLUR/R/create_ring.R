@@ -23,7 +23,7 @@ create_ring = function(inde_var,normalize=F)
   ringnames = paste(dimnames(roadrings)[[2]], buffers1,sep = "_")
   dimnames(roadrings)[[2]] = ringnames
   roadrings = data.frame(cbind(othervar, roadrings))
-  roadrings
+
 
   if (normalize )
   {
@@ -33,7 +33,7 @@ create_ring = function(inde_var,normalize=F)
 
     nor_ring = sweep(roadrings,2, t(rep(arearing,5)), "/")
   }
-
+  roadrings
   }
 #devtools::create("globalLUR")
 #load_all()
