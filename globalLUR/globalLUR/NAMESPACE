@@ -2,6 +2,7 @@
 
 export(create_ring)
 export(error_matrix)
+export(mergeraster2file)
 export(plot_error)
 export(plot_rsq)
 export(sampledf)

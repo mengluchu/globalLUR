@@ -33,7 +33,8 @@ create_ring = function(inde_var,normalize=F)
 
     nor_ring = sweep(roadrings,2, t(rep(arearing,5)), "/")
   }
-  roadrings
+
+  return(roadrings)
   }
 #devtools::create("globalLUR")
 #load_all()
