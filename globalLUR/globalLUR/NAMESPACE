@@ -2,6 +2,7 @@
 
 export(create_ring)
 export(error_matrix)
+export(join_by_id)
 export(merge_roads)
 export(mergeraster2file)
 export(plot_error)

@@ -22,6 +22,6 @@ merge_roads = function(inde_var, classvec, keep=F)
 
   names(a0)=  gsub(x = names(a0), pattern = paste(classvec[length(classvec)],"\\_",sep= ""), replacement =paste("M",paste(as.character(classvec),collapse=""),"\\_",sep=""))
   merg = cbind(a0, inde_var)
-  return(a0)
+  return(merg)
 }
 
