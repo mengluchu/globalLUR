@@ -19,3 +19,6 @@ a dataframe with merged variables
 \description{
 Merge new predictor variables (rasters)
 }
+\examples{
+merged = mergeraster2file(merged, "C:/Users/Lu000012/Documents/files/GLOBAL_LUR/predictor variables/elevation.map", "elevation")
+}

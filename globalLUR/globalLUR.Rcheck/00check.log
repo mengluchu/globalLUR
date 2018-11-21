@@ -1,0 +1,127 @@
+* using log directory 'C:/Users/Lu000012/Documents/files/GLOBAL_LUR/globalLUR/globalLUR.Rcheck'
+* using R version 3.4.1 (2017-06-30)
+* using platform: x86_64-w64-mingw32 (64-bit)
+* using session charset: ISO8859-1
+* using options '--no-manual --as-cran'
+* checking for file 'globalLUR/DESCRIPTION' ... OK
+* this is package 'globalLUR' version '0.0.0.9000'
+* package encoding: UTF-8
+* checking package namespace information ... OK
+* checking package dependencies ... OK
+* checking if this is a source package ... OK
+* checking if there is a namespace ... OK
+* checking for executable files ... OK
+* checking for hidden files and directories ... NOTE
+Found the following hidden files and directories:
+  globalLUR/.Rbuildignore
+These were most likely included in error. See section 'Package
+structure' in the 'Writing R Extensions' manual.
+* checking for portable file names ... OK
+* checking whether package 'globalLUR' can be installed ... OK
+* checking installed package size ... OK
+* checking package directory ... OK
+* checking DESCRIPTION meta-information ... WARNING
+Non-standard license specification:
+  What license is it under?
+Standardizable: FALSE
+* checking top-level files ... NOTE
+Non-standard file/directory found at top level:
+  'globalLUR'
+* checking for left-over files ... OK
+* checking index information ... OK
+* checking package subdirectories ... OK
+* checking R files for non-ASCII characters ... OK
+* checking R files for syntax errors ... OK
+* checking whether the package can be loaded ... OK
+* checking whether the package can be loaded with stated dependencies ... OK
+* checking whether the package can be unloaded cleanly ... OK
+* checking whether the namespace can be loaded with stated dependencies ... OK
+* checking whether the namespace can be unloaded cleanly ... OK
+* checking loading without being on the library search path ... OK
+* checking dependencies in R code ... WARNING
+'::' or ':::' import not declared from: 'rasterVis'
+* checking S3 generic/method consistency ... OK
+* checking replacement functions ... OK
+* checking foreign function calls ... OK
+* checking R code for possible problems ... NOTE
+plot_error: no visible global function definition for 'brewer.pal'
+plot_error : spatialerr: no visible global function definition for
+  'quantile'
+plot_error : spatialerr: no visible global function definition for
+  'st_sf'
+plot_error : spatialerr: no visible global function definition for
+  'st_geometry<-'
+plot_error: no visible global function definition for 'ggplot'
+plot_error: no visible global function definition for 'geom_sf'
+plot_error: no visible global function definition for 'aes'
+plot_error: no visible binding for global variable 'error'
+plot_error: no visible global function definition for
+  'scale_colour_gradientn'
+plot_error: no visible global function definition for 'labs'
+plot_error: no visible global function definition for 'extent'
+plot_error: no visible global function definition for 'raster'
+plot_error: no visible global function definition for 'rasterize'
+plot_error: no visible global function definition for 'layer'
+plot_error: no visible global function definition for 'sp.polygons'
+plot_error: no visible binding for global variable 'Germany'
+plot_rsq : returnrsq: no visible global function definition for 'lm'
+plot_rsq: no visible global function definition for 'ggplot'
+plot_rsq: no visible global function definition for 'aes'
+plot_rsq: no visible global function definition for 'geom_point'
+plot_rsq: no visible global function definition for 'theme'
+plot_rsq: no visible global function definition for 'element_text'
+sampledf: no visible global function definition for 'na.omit'
+sampledf: no visible global function definition for '%>%'
+sampledf: no visible global function definition for 'filter'
+sampledf: no visible binding for global variable 'country'
+sampledf: no visible global function definition for 'sample_frac'
+Undefined global functions or variables:
+  %>% Germany aes brewer.pal country element_text error extent filter
+  geom_point geom_sf ggplot labs layer lm na.omit quantile raster
+  rasterize sample_frac scale_colour_gradientn sp.polygons
+  st_geometry<- st_sf theme
+Consider adding
+  importFrom("stats", "filter", "lm", "na.omit", "quantile")
+to your NAMESPACE file.
+* checking Rd files ... OK
+* checking Rd metadata ... OK
+* checking Rd line widths ... OK
+* checking Rd cross-references ... OK
+* checking for missing documentation entries ... OK
+* checking for code/documentation mismatches ... OK
+* checking Rd \usage sections ... WARNING
+Undocumented arguments in documentation object 'error_matrix'
+  'validation'
+Documented arguments not in \usage in documentation object 'error_matrix':
+  'validataion'
+
+Undocumented arguments in documentation object 'plot_error'
+  'validation' 'plotraster'
+Documented arguments not in \usage in documentation object 'plot_error':
+  'validataion'
+
+Functions with \usage entries need to have the appropriate \alias
+entries, and all their arguments documented.
+The \usage entries must correspond to syntactically valid R code.
+See chapter 'Writing R documentation files' in the 'Writing R
+Extensions' manual.
+* checking Rd contents ... OK
+* checking for unstated dependencies in examples ... OK
+* checking examples ... ERROR
+Running examples in 'globalLUR-Ex.R' failed
+The error most likely occurred in:
+
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: sampledf
+> ### Title: devide the data into test and training set, and dataframe for
+> ###   modeling
+> ### Aliases: sampledf
+> 
+> ### ** Examples
+> 
+> a = sampledf(merged, fraction = 0.8, "ES")
+Error in na.omit(originaldata) : object 'merged' not found
+Calls: sampledf -> na.omit
+Execution halted
+* DONE
+Status: 1 ERROR, 3 WARNINGs, 3 NOTEs

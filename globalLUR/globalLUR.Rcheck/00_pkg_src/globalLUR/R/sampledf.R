@@ -1,7 +1,7 @@
 #'devide the data into test and training set, and dataframe for modeling
 #' @param  originaldata original dataframe
 #' @param  fraction, fraction for the training
-#' @param  country2digit country code, 2 digit, if NA or not in the database, the world is returned
+#' @param  country2digit country code, 2 digit
 #' @return inde_var the matrix containing response and predictors.  NA values are removed, and columes with all values 0 or less than 0 are removed
 #'
 #' @examples
@@ -15,14 +15,12 @@
 #require(dplyr)
 #require(sf)
 #require(RColorBrewer)
-sampledf = function(originaldata,fraction=0.8, country2digit=NA ){
+sampledf = function(originaldata,fraction=0.8, country2digit){
 
   buffer_oq_dense = na.omit(originaldata)
 
-  if (country2digit%in% buffer_oq_dense$country )
-
   buffer_oq_dense <- buffer_oq_dense%>% filter(country==country2digit)
-else warning("country not in the database, return all the countries")
+
 buffer_oq_dense$IDnew= 1: nrow(buffer_oq_dense)
 
 

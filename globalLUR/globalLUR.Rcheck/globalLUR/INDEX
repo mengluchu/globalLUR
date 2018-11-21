@@ -1,0 +1,6 @@
+create_ring             create a ring function
+error_matrix            error matrix outputs RMSE, MAE, IQR
+plot_error              Plot the prediction errors in space
+plot_rsq                Plot R sqaure with each predictor.
+sampledf                devide the data into test and training set, and
+                        dataframe for modeling
