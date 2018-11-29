@@ -4,15 +4,20 @@
 \alias{plot_rsq}
 \title{Plot R sqaure with each predictor.}
 \usage{
-plot_rsq(predictor_matrix, response)
+plot_rsq(predictor_matrix = NA, response = NA, rsqdf = NA,
+  varname = NA)
 }
 \arguments{
 \item{predictor_matrix}{a dataframe of predictors}
 
 \item{response}{the response (e.g. air pollution measurement)}
+
+\item{rsqdf}{alternatively can also provide a dataframe with rsq and names of the predictors.}
+
+\item{varname}{name of the column that contains predictor names}
 }
 \value{
-a plot plot individual R square if fitting a linear regression
+the dataframe of  r square with each predictor
 }
 \description{
 Plot R sqaure with each predictor.
