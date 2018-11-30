@@ -5,12 +5,14 @@
 #' @param pop_var the name of an additional variable as a linear term,  usually population withn a buffer, a string.
 #' @param training the index for the rows used for training.
 #' @param test the index for the rows used for testing.
+#' @param nls2start the start value for nls2. if providing an nls2start, the nls2 from nls2 package is used. Details see nls2.
+
 #' @details This method used nls for modelling. This function also prints errormatrix, the exponential model; plot coefficient. The modelling and evaluation should be separated at a later stage, now putting together for exploration only.
 #' @return An object of nls
 #' @export
 #' @example mechanical(inde_var,"day_value",pop_var = "pop5k", distance_centre = distance_centre, training, test)
 
-mechanical= function(variabledf, y_var=c("day_value","night_value", "value_mean"), pop_var="pop3k", distance_centre, training, test)
+mechanical= function(variabledf, y_var=c("day_value","night_value", "value_mean"), pop_var="pop3k", distance_centre, training, test,nls2start=NA)
 {
   variabledf=inde_var
   variabledf_tr = variabledf[training,]
@@ -40,9 +42,11 @@ mechanical= function(variabledf, y_var=c("day_value","night_value", "value_mean"
 
   # model: y = roadring * exp ( dis * a)
 
+ if (!is.na(nls2start))
+  a1 =  nls2(formu1, data = rdf,start = nls2start)
 
-  a1 =  nls(formu1, data = rdf,start = list(a = -0.001,Q1=0.01, Q2 = 0.001,Q3 = 0.0001, c = 0.001, d = 0.001))
-
+ else
+   a1 =  nls(formu1, data = rdf,start =  list(a = -0.001,Q1=0.01, Q2 = 0.001,Q3 = 0.0001, c = 0.001, d = 0.001))
 
   print(summary(a1))
   variabledf_test = variabledf[test,]
