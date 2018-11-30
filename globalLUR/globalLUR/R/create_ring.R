@@ -22,9 +22,9 @@ create_ring = function(inde_var,normalize=F, buffers_in = c(0,25,50,100,300,500,
   # roadrings = roadsonly - roadsonlyin_s
   getring=function(i, roadsonly, bf = buffernumber)
    {
-    roadtype_n = roadsonly[((i-1)*bf+1) :(i*bf)]
-
-   roadring_n =  cbind(roadtype_n[,1],t(apply(roadtype_n, 1, diff)))
+    roadtype_n = roadsonly[,((i-1)*bf+1) :(i*bf)]
+head(roadring_n)
+   roadring_n =  cbind(roadtype_n[,1],t(apply( roadtype_n, 1, diff)))
  }
  roadr= data.frame(lapply(1:number_roadtypes, getring, roadsonly))
 
