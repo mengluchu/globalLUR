@@ -26,13 +26,14 @@ mechanical= function(variabledf, y_var=c("day_value","night_value", "value_mean"
 
 
   b = paste0("Q",rep(1:3, each = 7))
+  disl = paste("dis", 1:7, sep = "")
   formu1 = as.formula(paste("y_train~",
                             paste(  names( ringsonly)  , "*", b,"*exp( a *", disl  ,")",collapse = "+"), "+d*pop", "+c"))
 
 
   # form the dataframe
   disdf = data.frame(mapply(rep,distance_center, each = nrow(ringsonly_tr) ))
-  disl = paste("dis", 1:7, sep = "")
+
 
   names(disdf)= disl
 
