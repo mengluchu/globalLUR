@@ -14,7 +14,7 @@
 
 mechanical= function(variabledf, y_var=c("day_value","night_value", "value_mean"), pop_var="pop3k", distance_centre, training, test,nls2start=NA)
 {
-  variabledf=inde_var
+
   variabledf_tr = variabledf[training,]
 
   roadsonly =  variabledf[, which(grepl("ROAD",
