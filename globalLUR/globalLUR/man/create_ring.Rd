@@ -4,10 +4,12 @@
 \alias{create_ring}
 \title{create a ring function}
 \usage{
-create_ring(inde_var, normalize = F)
+create_ring(inde_var, normalize = F, buffers_in = c(0, 25, 50, 100,
+  300, 500, 1000), buffers_out = c(25, 50, 100, 300, 500, 1000, 5000),
+  number_roadtypes)
 }
 \arguments{
-\item{inde_var}{a dataframe with ROAD variables named "ROAD", 5 types of roads, now is not a generic function, need the data to be formated in a way}
+\item{inde_var}{a dataframe with ROAD variables named "ROAD", n types of roads, now it is not a very generic function, need the data to be formated in a way as the buffers are ordered (e.g. 25m, 50m, 100m)}
 
 \item{normalize}{if T, devide the ring by the area of ring. Default is faulse}
 }
