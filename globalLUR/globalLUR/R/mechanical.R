@@ -67,7 +67,7 @@ mechanical= function(variabledf, y_var=c("day_value","night_value", "value_mean"
   plot(y_test_day,typ = "line")
   lines(dp , col= "red" )
 
-  plot( distance_center ,coef[2]*exp(distance_center *coef[1]), typ = "l" , main = "coefficients", ylim=c(0,4e-03) ,col = colorG[1])
+  plot( distance_center ,coef[2]*exp(distance_center *coef[1]), typ = "l" , main = "coefficients", ylim=c(0,8e-03) ,col = colorG[1])
   lines( distance_center ,coef[3]*exp(distance_center *coef[1]), typ = "l" , main = "coefficients",col = colorG[3])
   lines( distance_center ,coef[4]*exp(distance_center *coef[1]), typ = "l" , main = "coefficients",col = colorG[4])
 
