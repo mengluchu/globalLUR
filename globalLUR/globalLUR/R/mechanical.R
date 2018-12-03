@@ -3,6 +3,7 @@
 #' @param y_var  name of the dependent variable.
 #' @param distance_centre the distance to centre from each buffer.  (b2-b1)/2 + b1
 #' @param pop_var the name of an additional variable as a linear term,  usually population withn a buffer, a string.
+#'  @param Road_varname the name of variables contains road buffers, e.g. "ROAD"
 #' @param training the index for the rows used for training.
 #' @param test the index for the rows used for testing.
 #' @param nls2start the start value for nls2. if providing an nls2start, the nls2 from nls2 package is used. Details see nls2.
@@ -12,12 +13,12 @@
 #' @export
 #' @example mechanical(inde_var,"day_value",pop_var = "pop5k", distance_centre = distance_centre, training, test)
 
-mechanical= function(variabledf, y_var=c("day_value","night_value", "value_mean"), pop_var="pop3k", distance_centre, training, test,nls2start=NA)
+mechanical= function(variabledf, y_var=c("day_value","night_value", "value_mean"), pop_var="pop3k", distance_centre, training, test,nls2start=NA,Road_varname = "ROAD")
 {
 
   variabledf_tr = variabledf[training,]
 
-  roadsonly =  variabledf[, which(grepl("ROAD",
+  roadsonly =  variabledf[, which(grepl(Road_varname,
                                         names(variabledf)))] # 25 -50000
 
   ringsonly = create_ring(roadsonly, number_roadtypes = 3)

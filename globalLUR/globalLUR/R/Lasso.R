@@ -4,13 +4,14 @@
 #' @param y_varname  name of the dependent variable.
 #' @param training the index for the rows used for training.
 #' @param test the index for the rows used for testing.
+#' @param grepstring the variable/column names of predictors in Lasso, grepl stlye, e.g. "ROAD|pop|temp|wind|Rsp|OMI|eleva|coast"
 #' @return  error matrix, plot selected (min MSE ) coefficients
 #' @export
 
 
-Lasso = function (variabledf, y_varname= c("day_value","night_value", "value_mean"), training, test)
+Lasso = function (variabledf, y_varname= c("day_value","night_value", "value_mean"), training, test, grepstring ="ROAD|pop|temp|wind|Rsp|OMI|eleva|coast")
 {
-  pre_mat = variabledf[,which(grepl("ROAD|pop|temp|wind|Rsp|OMI|eleva|coast", names(variabledf)))]
+  pre_mat = variabledf[,which(grepl(grepstring, names(variabledf)))]
   pre_mat_tr = pre_mat[training,]
   pre_mat_test = pre_mat[test,]
   y_tr_value = variabledf[training, y_varname]

@@ -6,12 +6,18 @@
 \usage{
 create_ring(inde_var, normalize = F, buffers_in = c(0, 25, 50, 100,
   300, 500, 1000), buffers_out = c(25, 50, 100, 300, 500, 1000, 5000),
-  number_roadtypes)
+  number_roadtypes, Road_varname = "ROAD")
 }
 \arguments{
 \item{inde_var}{a dataframe with ROAD variables named "ROAD", n types of roads, now it is not a very generic function, need the data to be formated in a way as the buffers are ordered (e.g. 25m, 50m, 100m)}
 
 \item{normalize}{if T, devide the ring by the area of ring. Default is faulse}
+
+\item{buffers_in}{buffer sizes of the inner rings}
+
+\item{Road_varname}{the name of the road variable, grepl styple e.g. "ROAD"}
+
+\item{buffer_out}{buufer sizes of the outter rings}
 }
 \value{
 the road buffers becomes road ring buffers

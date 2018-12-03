@@ -5,7 +5,8 @@
 \title{Lasso model for LUR, crossvalidation, default fold (10)}
 \usage{
 Lasso(variabledf, y_varname = c("day_value", "night_value",
-  "value_mean"), training, test)
+  "value_mean"), training, test,
+  grepstring = "ROAD|pop|temp|wind|Rsp|OMI|eleva|coast")
 }
 \arguments{
 \item{variabledf}{the dataframe containing predictors and dependent variable}
@@ -15,6 +16,8 @@ Lasso(variabledf, y_varname = c("day_value", "night_value",
 \item{training}{the index for the rows used for training.}
 
 \item{test}{the index for the rows used for testing.}
+
+\item{grepstring}{the variable/column names of predictors in Lasso, grepl stlye, e.g. "ROAD|pop|temp|wind|Rsp|OMI|eleva|coast"}
 }
 \value{
 error matrix, plot selected (min MSE ) coefficients
