@@ -2,9 +2,11 @@
 % Please edit documentation in R/sampledf.R
 \name{sampledf}
 \alias{sampledf}
-\title{devide the data into test and training set, and dataframe for modeling}
+\title{devide the data into test and training set, and prepare the dataframe for modeling}
 \usage{
-sampledf(originaldata, fraction = 0.8, country2digit = NA)
+sampledf(originaldata, fraction = 0.8, country2digit = NA,
+  grepstring_rm = "ID|LATITUDE|LONGITUDE|ROAD_0|geometry|countryfullname",
+  rm_neg_col = T)
 }
 \arguments{
 \item{originaldata}{original dataframe}
@@ -12,12 +14,19 @@ sampledf(originaldata, fraction = 0.8, country2digit = NA)
 \item{fraction, }{fraction for the training}
 
 \item{country2digit}{country code, 2 digit, if NA or not in the database, the world is returned, the sampling is equal fraction per country}
+
+\item{grepstring_rm}{the variables that are to be removed, grepl style, e.g. "ID|LATITUDE|LONGITUDE|ROAD_0|geometry|countryfullname"}
+
+\item{rm_neg_col}{if True, which is the default, the columens and columes containing all negative values or 0s are removed}
 }
 \value{
-inde_var the matrix containing response and predictors.  NA values are removed, and columes with all values 0 or less than 0 are removed
+inde_var the matrix containing response and predictors.
 }
 \description{
-devide the data into test and training set, and dataframe for modeling
+devide the data into test and training set, and prepare the dataframe for modeling
+}
+\details{
+NA values are removed. This function is used for preprocessing, can be improved.
 }
 \examples{
 a = sampledf(merged, fraction = 0.8, "ES")

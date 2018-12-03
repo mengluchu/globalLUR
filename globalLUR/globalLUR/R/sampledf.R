@@ -1,8 +1,11 @@
-#'devide the data into test and training set, and dataframe for modeling
+#'devide the data into test and training set, and prepare the dataframe for modeling
 #' @param  originaldata original dataframe
 #' @param  fraction, fraction for the training
 #' @param  country2digit country code, 2 digit, if NA or not in the database, the world is returned, the sampling is equal fraction per country
-#' @return inde_var the matrix containing response and predictors.  NA values are removed, and columes with all values 0 or less than 0 are removed
+#' @param  grepstring_rm the variables that are to be removed, grepl style, e.g. "ID|LATITUDE|LONGITUDE|ROAD_0|geometry|countryfullname"
+#' @param rm_neg_col if True, which is the default, the columens and columes containing all negative values or 0s are removed
+#' @return inde_var the matrix containing response and predictors.
+#' @details NA values are removed. This function is used for preprocessing, can be improved.
 #'
 #' @examples
 #' a = sampledf(merged, fraction = 0.8, "ES")
@@ -15,7 +18,7 @@
 #require(dplyr)
 #require(sf)
 #require(RColorBrewer)
-sampledf = function(originaldata,fraction=0.8, country2digit=NA ){
+sampledf = function(originaldata,fraction=0.8, country2digit=NA, grepstring_rm = "ID|LATITUDE|LONGITUDE|ROAD_0|geometry|countryfullname", rm_neg_col=T){
 
   buffer_oq_dense = na.omit(originaldata)
 
@@ -35,14 +38,15 @@ else
 # index
 training = trainingdf$IDnew
 test = buffer_oq_dense$IDnew[-training]
-inde_var = buffer_oq_dense[, -which(grepl("ID|LATITUDE|LONGITUDE|ROAD_0|geometry|countryfullname", names(buffer_oq_dense)))]
+inde_var = buffer_oq_dense[, -which(grepl(grepstring_rm, names(buffer_oq_dense)))]
 
 #prex_f = model.matrix(value_mean~., inde_var)  #  only to get the model matrix
-
+if (rm_neg_col)
+{
 rm0 = which(apply(inde_var, 2, max)==0)
 if (length(rm0)!=0)
   inde_var = inde_var[,-rm0]
-
+}
 return(list(training =training, test =test,inde_var=inde_var))
 }
 
