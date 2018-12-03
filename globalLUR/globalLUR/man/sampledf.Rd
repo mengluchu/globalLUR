@@ -11,7 +11,7 @@ sampledf(originaldata, fraction = 0.8, country2digit = NA)
 
 \item{fraction, }{fraction for the training}
 
-\item{country2digit}{country code, 2 digit, if NA or not in the database, the world is returned}
+\item{country2digit}{country code, 2 digit, if NA or not in the database, the world is returned, the sampling is equal fraction per country}
 }
 \value{
 inde_var the matrix containing response and predictors.  NA values are removed, and columes with all values 0 or less than 0 are removed
