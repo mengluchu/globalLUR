@@ -7,11 +7,12 @@
 *  merge_roads      
 *  sampledf 
      
-###### Data exploration: Scatter plot, inspecting and comparing correlations between variables.
+##### Data exploration: Scatter plot, inspecting and comparing correlations between variables.
 * plot_rsq
 * RDring_coef         
 * scatterplot             
 * univar_rsq      
+
 ##### Modelling and validation: producing plots and error matrices as results of different modeling: LM, Random forest, Lasso, mechanical model.
 * create_ring          
 * error_matrix 
