@@ -7,13 +7,14 @@
 #' @param training the index for the rows used for training.
 #' @param test the index for the rows used for testing.
 #' @param nls2start the start value for nls2. if providing an nls2start, the nls2 from nls2 package is used. Details see nls2.
+#' @param normalize if True, the road ring is normalised by the area (default is false)
 
 #' @details This method used nls for modelling. This function also prints errormatrix, the exponential model; plot coefficient. The modelling and evaluation should be separated at a later stage, now putting together for exploration only.
 #' @return An object of nls
 #' @export
 #' @example mechanical(inde_var,"day_value",pop_var = "pop5k", distance_centre = distance_centre, training, test)
 
-mechanical= function(variabledf, y_var=c("day_value","night_value", "value_mean"), pop_var="pop3k", distance_centre, training, test,nls2start=NA,Road_varname = "ROAD")
+mechanical= function(variabledf, y_var=c("day_value","night_value", "value_mean"), pop_var="pop3k", distance_centre, training, test,nls2start=NA,Road_varname = "ROAD",normalize=F)
 {
 
   variabledf_tr = variabledf[training,]
@@ -21,7 +22,7 @@ mechanical= function(variabledf, y_var=c("day_value","night_value", "value_mean"
   roadsonly =  variabledf[, which(grepl(Road_varname,
                                         names(variabledf)))] # 25 -50000
 
-  ringsonly = create_ring(roadsonly, number_roadtypes = 3)
+  ringsonly = create_ring(roadsonly,normalize=normalize, number_roadtypes = 3)
 
   ringsonly_tr = ringsonly[training,]
 

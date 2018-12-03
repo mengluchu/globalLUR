@@ -18,7 +18,7 @@ Lasso = function (variabledf, y_varname= c("day_value","night_value", "value_mea
   y_test_value = variabledf[test,y_varname]
 
   cvfit <- glmnet::cv.glmnet(as.matrix(pre_mat_tr),y_tr_value ,type.measure = "mse",standardize=TRUE,alpha = 0.5,lower.limit=0)
-
+ # print( coef(cvfit))
   Lassoselected(cvfit)
 
   elastic_pred = predict(cvfit, newx=as.matrix(pre_mat_test))

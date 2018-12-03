@@ -6,7 +6,7 @@
 \usage{
 mechanical(variabledf, y_var = c("day_value", "night_value",
   "value_mean"), pop_var = "pop3k", distance_centre, training, test,
-  nls2start = NA, Road_varname = "ROAD")
+  nls2start = NA, Road_varname = "ROAD", normalize = F)
 }
 \arguments{
 \item{variabledf}{the dataframe containing predictors and dependent variable}
@@ -23,6 +23,8 @@ mechanical(variabledf, y_var = c("day_value", "night_value",
 \item{test}{the index for the rows used for testing.}
 
 \item{nls2start}{the start value for nls2. if providing an nls2start, the nls2 from nls2 package is used. Details see nls2.}
+
+\item{normalize}{if True, the road ring is normalised by the area (default is false)}
 }
 \value{
 An object of nls
