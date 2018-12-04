@@ -13,12 +13,15 @@
 rf_LUR = function (variabledf, y_varname= c("day_value","night_value", "value_mean"), training, test,  grepstring ="ROAD|pop|temp|wind|Rsp|OMI|eleva|coast", ...)
 {
 
-pre_mat = variabledf[training,which(grepl(grepstring , names(variabledf)))]
-rf3 <- ranger(variabledf[training,y_varname]~ ., data = pre_mat,importance = importance)
+pre_mat = variabledf[training, which(grepl(grepstring, names(variabledf)))]
+y_train = variabledf[training, y_varname]
+y_test = variabledf[test, y_varname]
+x_test = variabledf[test,  ]
+rf3 <- ranger(y_train~ ., data = pre_mat, importance = importance)
 
 df = data.frame(imp_val  = rf3$variable.importance)
 
-imp_plot = ggplot( df, aes(x=reorder(rownames(df) ,imp_val), y=imp_val,fill=imp_val))+
+imp_plot = ggplot(df, aes(x=reorder(rownames(df), imp_val), y=imp_val,fill=imp_val))+
   geom_bar(stat="identity", position="dodge")+ coord_flip()+
   ylab("Variable Importance")+
   xlab("")+
@@ -27,7 +30,7 @@ imp_plot = ggplot( df, aes(x=reorder(rownames(df) ,imp_val), y=imp_val,fill=imp_
   scale_fill_gradient(low="red", high="blue")
 
 print(imp_plot)
-pre_rf <- predictions(predict(rf3, data =variabledf[test,  ]))
+pre_rf <- predictions(predict(rf3, data = x_test))
 #rf_residual <- pre_rf -  rdf_test$NO2
-error_matrix(variabledf[test,y_varname], pre_rf)
+error_matrix(y_test, pre_rf)
 }
