@@ -13,7 +13,7 @@
 rf_LUR = function (variabledf, y_varname= c("day_value","night_value", "value_mean"), training, test, importance = "impurity", grepstring ="ROAD|pop|temp|wind|Rsp|OMI|eleva|coast")
 {
 pre_mat = variabledf[training,which(grepl(grepstring , names(variabledf)))]
-rf3 <- ranger(variabledf[,y_varname]~ ., data = pre_mat,importance = importance)
+rf3 <- ranger(variabledf[training,y_varname]~ ., data = pre_mat,importance = importance)
 print(rf3)
 df = data.frame(importance  = rf3$variable.importance)
 
@@ -25,7 +25,7 @@ imp_plot = ggplot( df, aes(x=reorder(rownames(df) ,importance), y=importance,fil
   guides(fill=F)+
   scale_fill_gradient(low="red", high="blue")
 plot(imp_plot)
-pre_rf <- predictions(predict(rf3, data =xtest_f ))
+pre_rf <- predictions(predict(rf3, data =variabledf[test,y_varname]))
 #rf_residual <- pre_rf -  rdf_test$NO2
 error_matrix(y_test_night, pre_rf)
 }
