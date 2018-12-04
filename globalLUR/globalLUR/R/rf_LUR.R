@@ -22,7 +22,7 @@ imp_plot = ggplot( df, aes(x=reorder(rownames(df) ,importance), y=importance,fil
   geom_bar(stat="identity", position="dodge")+ coord_flip()+
   ylab("Variable Importance")+
   xlab("")+
-  ggtitle(paste("Information Value Summary", y_varname, sep =": ")+
+  ggtitle(paste("Information Value Summary", y_varname, sep =": "))+
   guides(fill=F)+
   scale_fill_gradient(low="red", high="blue")
 
