@@ -16,9 +16,9 @@ rf_LUR = function (variabledf, y_varname= c("day_value","night_value", "value_me
 pre_mat = variabledf[training,which(grepl(grepstring , names(variabledf)))]
 rf3 <- ranger(variabledf[training,y_varname]~ ., data = pre_mat,importance = importance)
 
-df = data.frame(importance  = rf3$variable.importance)
+df = data.frame(imp_val  = rf3$variable.importance)
 
-imp_plot = ggplot( df, aes(x=reorder(rownames(df) ,importance), y=importance,fill=importance))+
+imp_plot = ggplot( df, aes(x=reorder(rownames(df) ,imp_val), y=imp_val,fill=imp_val))+
   geom_bar(stat="identity", position="dodge")+ coord_flip()+
   ylab("Variable Importance")+
   xlab("")+
