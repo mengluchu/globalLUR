@@ -25,7 +25,7 @@ imp_plot = ggplot( df, aes(x=reorder(rownames(df) ,importance), y=importance,fil
   guides(fill=F)+
   scale_fill_gradient(low="red", high="blue")
 plot(imp_plot)
-pre_rf <- predictions(predict(rf3, data =variabledf[test,y_varname]))
+pre_rf <- predictions(predict(rf3, data =variabledf[test,  ]))
 #rf_residual <- pre_rf -  rdf_test$NO2
-error_matrix(y_test_night, pre_rf)
+error_matrix(variabledf[test,y_varname], pre_rf)
 }
