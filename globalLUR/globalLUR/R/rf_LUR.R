@@ -12,12 +12,15 @@
 
 rf_LUR = function (variabledf, y_varname= c("day_value","night_value", "value_mean"), training, test,  grepstring ="ROAD|pop|temp|wind|Rsp|OMI|eleva|coast", ...)
 {
+ prenres = paste(y_varname,"|", grepstring, sep = "")
+pre_mat = variabledf[training, which(grepl(prenres, names(variabledf)))]
 
-pre_mat = variabledf[training, which(grepl(grepstring, names(variabledf)))]
-y_train = variabledf[training, y_varname]
 y_test = variabledf[test, y_varname]
 x_test = variabledf[test,  ]
-rf3 <- ranger(y_train~ ., data = pre_mat, importance = importance)
+
+formu = as.formula(paste(y_varname,"~.", sep = ""))
+
+rf3 <- ranger(formu , data = pre_mat, importance = importance)
 
 df = data.frame(imp_val  = rf3$variable.importance)
 
