@@ -41,11 +41,11 @@ print(error_matrix(y_test, pre_rf))
 
 cf=ctree(formu, data=pre_mat, controls=cforest_control(mtry=2, mincriterion=0))
 plot(cf, type="simple",           # no terminal plots
-     inner_panel=node_inner(airct,
+     inner_panel=node_inner(cf,
                             abbreviate = TRUE,            # short variable names
                             pval = FALSE,                 # no p-values
                             id = FALSE),                  # no id of node
-     terminal_panel=node_terminal(airct,
+     terminal_panel=node_terminal(cf,
                                   abbreviate = TRUE,
                                   digits = 1,                   # few digits on numbers
                                   fill = c("white"),            # make box white not grey
