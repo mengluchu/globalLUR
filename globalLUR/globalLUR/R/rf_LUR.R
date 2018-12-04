@@ -10,7 +10,7 @@
 #' @export
 
 
-rf_LUR = function (variabledf, y_varname= c("day_value","night_value", "value_mean"), training, test, importance = "impurity", grepstring ="ROAD|pop|temp|wind|Rsp|OMI|eleva|coast")
+rf_LUR = function (variabledf, y_varname= c("day_value","night_value", "value_mean"), training, test,  grepstring ="ROAD|pop|temp|wind|Rsp|OMI|eleva|coast", ...)
 {
 
 pre_mat = variabledf[training,which(grepl(grepstring , names(variabledf)))]
