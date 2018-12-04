@@ -4,7 +4,6 @@
 #' @param y_varname  name of the dependent variable.
 #' @param training the index for the rows used for training.
 #' @param test the index for the rows used for testing.
-#' @param importance the method used for variable importance, from ranger. e.g. "impurity" calculate gini, which is the default
 #' @param grepstring the variable/column names of predictors in Lasso, grepl stlye, e.g. "ROAD|pop|temp|wind|Rsp|OMI|eleva|coast"
 #' @return  error matrix, plot selected (min MSE ) coefficients
 #' @export
@@ -20,7 +19,7 @@ x_test = variabledf[test,  ]
 
 formu = as.formula(paste(y_varname,"~.", sep = ""))
 
-rf3 <- ranger(formu , data = pre_mat, importance = importance)
+rf3 <- ranger(formu , data = pre_mat, importance = "impurity")
 
 df = data.frame(imp_val  = rf3$variable.importance)
 
