@@ -33,10 +33,12 @@ imp_plot = ggplot(df, aes(x=reorder(rownames(df), imp_val), y=imp_val,fill=imp_v
 
 print(imp_plot)
 
-cf=ctree(formu, data=pre_mat, controls=cforest_control(mtry=2, mincriterion=0))
-plot(cf,type="simple")
+
 
 pre_rf <- predictions(predict(rf3, data = x_test))
 #rf_residual <- pre_rf -  rdf_test$NO2
-error_matrix(y_test, pre_rf)
+print(error_matrix(y_test, pre_rf))
+
+cf=ctree(formu, data=pre_mat, controls=cforest_control(mtry=2, mincriterion=0))
+plot(cf,type="simple")
 }
