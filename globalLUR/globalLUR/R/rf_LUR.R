@@ -25,6 +25,7 @@ imp_plot = ggplot( df, aes(x=reorder(rownames(df) ,importance), y=importance,fil
   ggtitle(paste("Information Value Summary", y_varname, sep =": ")+
   guides(fill=F)+
   scale_fill_gradient(low="red", high="blue")
+
 print(imp_plot)
 pre_rf <- predictions(predict(rf3, data =variabledf[test,  ]))
 #rf_residual <- pre_rf -  rdf_test$NO2
