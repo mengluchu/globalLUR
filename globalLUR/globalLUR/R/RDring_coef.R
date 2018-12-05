@@ -22,7 +22,7 @@ RDring_coef =function(variabledf, y_var, Road_varname = "ROAD", number_roadtypes
   else
     grepstring = paste(Road_varname,"|", deparse(y_var), sep = "")
 
-  pre_mat = rdf2[,which(grepl(grepstring, names(rdf2)))]
+  pre_mat = subset_grep(rdf2,grepstring)
   f = formula(paste(y_var, "~.", sep= ""))
   alm = lm(f , data = pre_mat)
   #print( summary(alm))

@@ -12,7 +12,7 @@ create_ring = function(inde_var,normalize=F, buffers_in = c(0,25,50,100,300,500,
 
 {
   buffernumber = length(buffers_in)
-  roadsonly =  inde_var[, which(grepl(Road_varname, names( inde_var) ))]
+  roadsonly =  subset_grep(inde_var, Road_varname)
  # for5000m = seq(buffernumber,  number_roadtypes*buffernumber, by = buffernumber)
  # roadsonly_in = roadsonly
  # roadsonly_in[,for5000m] = 0 # don't need 5000, so let them be 0 and put them in front, for road ring 0.

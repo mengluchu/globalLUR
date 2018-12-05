@@ -12,7 +12,8 @@
 rf_LUR = function (variabledf, y_varname= c("day_value","night_value", "value_mean"), training, test,  grepstring ="ROAD|pop|temp|wind|Rsp|OMI|eleva|coast", ...)
 {
  prenres = paste(y_varname,"|", grepstring, sep = "")
-pre_mat = variabledf[training, which(grepl(prenres, names(variabledf)))]
+pre_mat = subset_grep(variabledf[training,], prenres)
+
 
 y_test = variabledf[test, y_varname]
 x_test = variabledf[test,  ]

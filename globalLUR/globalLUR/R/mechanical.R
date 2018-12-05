@@ -19,8 +19,7 @@ mechanical= function(variabledf, y_var=c("day_value","night_value", "value_mean"
 
   variabledf_tr = variabledf[training,]
 
-  roadsonly =  variabledf[, which(grepl(Road_varname,
-                                        names(variabledf)))] # 25 -50000
+  roadsonly = subset_grep(variabledf, Road_varname)
 
   ringsonly = create_ring(roadsonly,normalize=normalize, number_roadtypes = 3)
 

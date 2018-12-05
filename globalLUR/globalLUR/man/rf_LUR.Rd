@@ -5,8 +5,8 @@
 \title{Random forest for LUR (using ranger)}
 \usage{
 rf_LUR(variabledf, y_varname = c("day_value", "night_value",
-  "value_mean"), training, test, importance = "impurity",
-  grepstring = "ROAD|pop|temp|wind|Rsp|OMI|eleva|coast")
+  "value_mean"), training, test,
+  grepstring = "ROAD|pop|temp|wind|Rsp|OMI|eleva|coast", ...)
 }
 \arguments{
 \item{variabledf}{the dataframe containing predictors and dependent variable}
@@ -16,8 +16,6 @@ rf_LUR(variabledf, y_varname = c("day_value", "night_value",
 \item{training}{the index for the rows used for training.}
 
 \item{test}{the index for the rows used for testing.}
-
-\item{importance}{the method used for variable importance, from ranger. e.g. "impurity" calculate gini, which is the default}
 
 \item{grepstring}{the variable/column names of predictors in Lasso, grepl stlye, e.g. "ROAD|pop|temp|wind|Rsp|OMI|eleva|coast"}
 }

@@ -11,7 +11,7 @@
 
 Lasso = function (variabledf, y_varname= c("day_value","night_value", "value_mean"), training, test, grepstring ="ROAD|pop|temp|wind|Rsp|OMI|eleva|coast")
 {
-  pre_mat = variabledf[,which(grepl(grepstring, names(variabledf)))]
+  pre_mat = subset_grep(variabledf, grepstring)
   pre_mat_tr = pre_mat[training,]
   pre_mat_test = pre_mat[test,]
   y_tr_value = variabledf[training, y_varname]
