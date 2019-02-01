@@ -14,20 +14,20 @@
 #' @export
 #' @example mechanical(inde_var,"day_value",pop_var = "pop5k", distance_centre = distance_centre, training, test)
 
-mechanical= function(variabledf, y_var=c("day_value","night_value", "value_mean"), pop_var="pop3k", distance_centre, training, test,nls2start=NA,Road_varname = "ROAD",normalize=F)
+mechanical= function(variabledf, y_var=c("day_value","night_value", "value_mean"), pop_var="pop3k", distance_centre, roadtypes = 3, buffers_in, buffers_out, training, test,nls2start=NA,Road_varname = "ROAD",normalize=F)
 {
 
   variabledf_tr = variabledf[training,]
 
   roadsonly = subset_grep(variabledf, Road_varname)
 
-  ringsonly = create_ring(roadsonly,normalize=normalize, number_roadtypes = 3)
+  ringsonly = create_ring(roadsonly,normalize=normalize, number_roadtypes = roadtypes,buffers_in = buffers_in,buffers_out = buffers_out)
 
   ringsonly_tr = ringsonly[training,]
+  nring = length(buffers_in)
 
-
-  b = paste0("Q",rep(1:3, each = 7))
-  disl = paste("dis", 1:7, sep = "")
+  b = paste0("Q",rep(1:roadtypes, each = nring))
+  disl = paste("dis", 1:nring, sep = "")
   formu1 = as.formula(paste("y_train~",
                             paste(  names( ringsonly)  , "*", b,"*exp( a *", disl  ,")",collapse = "+"), "+d*pop", "+c"))
 

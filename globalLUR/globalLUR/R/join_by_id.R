@@ -1,17 +1,17 @@
-#' Join variables by ID, requires an ID file with coordinates
-#' @param IDfile sp file with coordinate and ID that Oliver uses
-#' @param coordinatefile sp file with coordinate and variables values (air quality measurements) but no ID
+#' Join variables with coordinates to the destination file by ID, so it requires an ID file with coordinates
+#' @param IDfile sp or dataframe with coordinate and ID that Oliver uses
+#' @param coordinatefile sp or datafrme with coordinate and variables values (air quality measurements) but no ID
 #' @param file2merge dataframe to merge to, i.e. file with all the variables
 #' @param varname the name of the variable in the coordinatefile to merge
 #' @return a dataframe
 #' @export
 #' @example  join_by_id(IDfile= testoaq, coordinatefile=meanoaq, file2merge = merged, varname="day_mean")
-#require(sf)
-#require(maptools)
-#require(sp)
-#meanoaq = read.csv("q_day.csv") #locations and values
-#testoaq = read.csv("openaqmorethan1000_ch_locations.csv") # ID with locaitons
-
+#' require(sf)
+#' require(maptools)
+#' require(sp)
+#' meanoaq = read.csv("q_day.csv") #locations and values
+#' testoaq = read.csv("openaqmorethan1000_ch_locations.csv") # ID with locaitons
+#' join_by_id(IDfile= testoaq, coordinatefile=d, file2merge = merged, varname="value", newname = "day_value")
 join_by_id= function(IDfile , coordinatefile, file2merge = merged, varname="value", newname)
 {
   if(is.data.frame(IDfile)){
