@@ -2,15 +2,15 @@
 % Please edit documentation in R/join_by_id.R
 \name{join_by_id}
 \alias{join_by_id}
-\title{Join variables by ID, requires an ID file with coordinates}
+\title{Join variables with coordinates to the destination file by ID, so it requires an ID file with coordinates}
 \usage{
 join_by_id(IDfile, coordinatefile, file2merge = merged,
   varname = "value", newname)
 }
 \arguments{
-\item{IDfile}{sp file with coordinate and ID that Oliver uses}
+\item{IDfile}{sp or dataframe with coordinate and ID that Oliver uses}
 
-\item{coordinatefile}{sp file with coordinate and variables values (air quality measurements) but no ID}
+\item{coordinatefile}{sp or datafrme with coordinate and variables values (air quality measurements) but no ID}
 
 \item{file2merge}{dataframe to merge to, i.e. file with all the variables}
 
@@ -20,5 +20,5 @@ join_by_id(IDfile, coordinatefile, file2merge = merged,
 a dataframe
 }
 \description{
-Join variables by ID, requires an ID file with coordinates
+Join variables with coordinates to the destination file by ID, so it requires an ID file with coordinates
 }

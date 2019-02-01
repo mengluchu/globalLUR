@@ -5,8 +5,8 @@
 \title{create a ring function}
 \usage{
 create_ring(inde_var, normalize = F, buffers_in = c(0, 25, 50, 100,
-  300, 500, 1000), buffers_out = c(25, 50, 100, 300, 500, 1000, 5000),
-  number_roadtypes, Road_varname = "ROAD")
+  300, 500, 800, 1000, 3000), buffers_out = c(25, 50, 100, 300, 500, 800,
+  1000, 3000, 5000), number_roadtypes, Road_varname = "ROAD")
 }
 \arguments{
 \item{inde_var}{a dataframe with ROAD variables named "ROAD", n types of roads, now it is not a very generic function, need the data to be formated in a way as the buffers are ordered (e.g. 25m, 50m, 100m)}

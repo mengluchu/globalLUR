@@ -5,8 +5,9 @@
 \title{mechanical model: use an exponential function to describe the coefficients away from roads}
 \usage{
 mechanical(variabledf, y_var = c("day_value", "night_value",
-  "value_mean"), pop_var = "pop3k", distance_centre, training, test,
-  nls2start = NA, Road_varname = "ROAD", normalize = F)
+  "value_mean"), pop_var = "pop3k", distance_centre, roadtypes = 3,
+  buffers_in, buffers_out, training, test, nls2start = NA,
+  Road_varname = "ROAD", normalize = F)
 }
 \arguments{
 \item{variabledf}{the dataframe containing predictors and dependent variable}

@@ -5,7 +5,8 @@
 \title{Plot coefficients of roadrings of fitting a linear regression model.}
 \usage{
 RDring_coef(variabledf, y_var, Road_varname = "ROAD",
-  number_roadtypes = 3, n_buffer = 7, pop_var = NA)
+  number_roadtypes = 3, buffers_in, buffers_out, pop_var = NA,
+  normalize = F)
 }
 \arguments{
 \item{variabledf}{dataframe including predictors and dependent variable}
@@ -16,7 +17,9 @@ RDring_coef(variabledf, y_var, Road_varname = "ROAD",
 
 \item{number_roadtypes}{number of roadtypes, by default 3}
 
-\item{n_buffer}{number of buffers, by default 7}
+\item{buffers_in}{buffers of the inner ring}
+
+\item{buffers_out}{buffers of the outer ring}
 
 \item{pop_var}{other variables added to linear regression, in a list or vector if multiple. e.g. popvar = c("pop3k", "RSp", "elevation")}
 }

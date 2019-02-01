@@ -8,12 +8,12 @@
 #' @param buffers_out buffers of the outer ring
 #' @export
 
-RDring_coef =function(variabledf, y_var, Road_varname = "ROAD", number_roadtypes = 3,buffers_in,buffers_out, pop_var=NA ){
+RDring_coef =function(variabledf, y_var, Road_varname = "ROAD", number_roadtypes = 3,buffers_in,buffers_out, pop_var=NA, normalize=F){
 
   #  substitute(y_var)
 
 
-  rdf2 = create_ring(variabledf,normalize=normalize, number_roadtypes = roadtypes,buffers_in = buffers_in,buffers_out = buffers_out)
+  rdf2 = create_ring(variabledf,normalize=normalize, number_roadtypes = number_roadtypes,buffers_in = buffers_in,buffers_out = buffers_out)
 
   if (!is.na(pop_var))
   {
