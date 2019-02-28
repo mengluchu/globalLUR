@@ -9,14 +9,14 @@
 #' @export
 
 
-plot_error = function(validation =0, prediction  = 0 , geome, err = 0, extremequantil_low=0.025, extremequantil_high = 0.975, plotraster= T)
+plot_error = function(validation =0, prediction  = 0 , geome, err = NA, extremequantil_low=0.025, extremequantil_high = 0.975, plotraster= T)
 {
   colorB = brewer.pal(7,"Greens")
   colorG = brewer.pal(11,"PiYG")
   colorS = brewer.pal(11, "Spectral")
-  spatialerr= function(validation=0, prediction=0, err=0, geome, extremequantil_low ,extremequantil_high )
+  spatialerr= function(validation=0, prediction=0, err=err, geome, extremequantil_low ,extremequantil_high )
   {
-    if (err ==0)
+    if (is.na(err))
       err =  prediction-validation
 
 
@@ -33,21 +33,20 @@ plot_error = function(validation =0, prediction  = 0 , geome, err = 0, extremequ
   }
 
 
-  if (err==0)
-  {
-    sf1 = spatialerr(validation =validation,prediction = prediction,geome = geome, extremequantil_low =extremequantil_low,extremequantil_high =extremequantil_high)
-    if (plotraster == F)
-      ggplot() +
-      geom_sf(data = sf1,aes(  color= error )) +
-      scale_colour_gradientn(colours = colorG)+labs(title="validation error" )
-    else
-    {
-      e <- extent(sf1)
-      r <- raster(e, resolution = 0.5)
-      x <- rasterize(sf1, r, fun=mean)
+  if(!is.na(err)) {
+          sf1 = spatialerr(validation =validation,err=err, prediction = prediction,geome = geome, extremequantil_low =extremequantil_low,extremequantil_high =extremequantil_high)
 
-      rasterVis::levelplot(x[[2]], margin = F)}
-  }
+      if (plotraster == F)
+          ggplot(sf1) +
+          geom_sf( aes(  color= error )) +
+          scale_colour_gradientn(colours = colorG)+labs(title="validation error" )
+      else {
+            e <- extent(sf1)
+            r <- raster(e, resolution = 0.5)
+            x <- rasterize(sf1, r, fun=mean)
+            rasterVis::levelplot(x[[2]], margin = F)
+            }
+       }
   else
   {
     sf1 = spatialerr(err=err,geome = geome,extremequantil_low =extremequantil_low ,extremequantil_high =extremequantil_high)

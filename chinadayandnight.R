@@ -1,21 +1,48 @@
-load("C:/Users/Lu000012/Documents/files/GLOBAL_LUR/china_hourly.r")
+load("C:/Users/Lu000012/Documents/files/GLOBAL_LUR/china_hourly.r") #df1
 load("C:/Users/Lu000012/Documents/files/GLOBAL_LUR/China2017hourly.r")
 
 dfstno2 = data.frame(stNO2)
 
 time1 = strptime( names(df1), "H%Y.%m.%d.%H.%M.%S")
+
 df1=df1[,-2003]
+df2 = sapply(df1,  removedips)
+
+ 
+
 time = time1[-2003]
-dftime = cbind(time, data.frame(t(df1)))
+dftime = cbind(time, data.frame(t(df2)))
 
 library(lubridate)
 library(dplyr)
 df1 = dftime%>%mutate(hours  = as.numeric(hour(time)))
-chinaday = df1%>% filter(hours>=7 &hours <= 21)
-chinanight  = df1%>% filter(hours<7 | hours>21)
 
+ chinaday = df1%>% filter(hours>=7 &hours <= 21)
+ chinanight  = df1%>% filter(hours<7 | hours>21)
+ 
+  
 CN_mean_day = colMeans(chinaday[,-c(1, 1581)], na.rm = T, dims = 1)
 CN_mean_night = colMeans(chinanight[,-c(1,1581)], na.rm = T, dims = 1)
+
+save (df1, file = "df1.rdata")
+for (j in 1:1000)
+{
+  a =0
+for (i in 0:23)
+  {
+ 
+chinanight  = df1%>% filter(hours==i)
+CN_mean_night = colMeans(chinanight[,-c(1,1581)], na.rm = T, dims = 1)
+a = c(a, na.omit(CN_mean_night)[1] )
+#quantile(na.omit(CN_mean_night), 0.1)
+}
+plot(a[-1], xlab = "hour", ylab = "mean NO2")
+} 
+  
+
+summary(CN_mean_night)
+summary(CN_mean_day)
+
 
 Chinaday  = cbind(data.frame(stNO2@sp),value = CN_mean_day,   country = "CN")
 Chinanight = cbind(data.frame(stNO2@sp),value = CN_mean_night,  country = "CN")
