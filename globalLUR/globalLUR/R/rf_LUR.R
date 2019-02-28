@@ -5,7 +5,7 @@
 #' @param training the index for the rows used for training.
 #' @param test the index for the rows used for testing.
 #' @param grepstring the variable/column names of predictors in Lasso, grepl stlye, e.g. "ROAD|pop|temp|wind|Rsp|OMI|eleva|coast"
-#' @return  error matrix, plot selected (min MSE ) coefficients
+#' @return a list of the object of ranger, ctree, and rpart tree. error matrix, plot selected (min MSE ) coefficients
 #' @export
 
 
@@ -56,5 +56,5 @@ cf=ctree(formu, data=pre_mat)
 
 
 cf2=rpart(formu, data=pre_mat)
-return(list(cf,cf2))
+return(list(rf3, cf,cf2))
 }
