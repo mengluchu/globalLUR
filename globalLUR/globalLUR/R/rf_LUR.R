@@ -5,7 +5,7 @@
 #' @param training the index for the rows used for training.
 #' @param test the index for the rows used for testing.
 #' @param grepstring the variable/column names of predictors in Lasso, grepl stlye, e.g. "ROAD|pop|temp|wind|Rsp|OMI|eleva|coast"
-#' @return a list of the object of ranger, ctree, and rpart tree. error matrix, plot selected (min MSE ) coefficients
+#' @return  plot variable importance and an error matrix
 #' @export
 
 
@@ -34,27 +34,10 @@ imp_plot = ggplot(df, aes(x=reorder(rownames(df), imp_val), y=imp_val,fill=imp_v
 
 print(imp_plot)
 
-
-
-pre_rf <- predictions(predict(rf3, data = x_test))
+pre_rf <- predictions(predict(rf3, data =x_test  ))
 #rf_residual <- pre_rf -  rdf_test$NO2
+
 print(error_matrix(y_test, pre_rf))
 
-cf=ctree(formu, data=pre_mat)
-#plot(cf, type="simple",           # no terminal plots
-#     inner_panel=node_inner(cf,
-#                            abbreviate = F,            # short variable names
-#                            pval = FALSE,                 # no p-values
-#                            id = FALSE),                  # no id of node
-#     terminal_panel=node_terminal(cf,
-#                                  abbreviate = F,
-#                                  digits = 1,                   # few digits on numbers
-#                                  fill = c("white"),            # make box white not grey
-#                                  id = FALSE)
-#)
 
-
-
-cf2=rpart(formu, data=pre_mat)
-return(list(rf3, cf,cf2))
 }
