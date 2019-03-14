@@ -9,7 +9,7 @@
 #' @export
 
 
-cforest_LUR = function (variabledf, y_varname= c("day_value","night_value", "value_mean"), training, test,  grepstring ="ROAD|pop|temp|wind|Rsp|OMI|eleva|coast", ...)
+cforest_LUR = function (variabledf, vis, y_varname= c("day_value","night_value", "value_mean"), training, test,  grepstring ="ROAD|pop|temp|wind|Rsp|OMI|eleva|coast", ...)
 {
   prenres = paste(y_varname,"|", grepstring, sep = "")
   pre_mat = subset_grep(variabledf[training,], prenres)
@@ -23,7 +23,7 @@ cforest_LUR = function (variabledf, y_varname= c("day_value","night_value", "val
   rf3 <- cforest(formu , data = pre_mat )
 
   df = data.frame(imp_val  = varimp(rf3))
-
+  if (vis = T){
   imp_plot = ggplot(df, aes(x=reorder(rownames(df), imp_val), y=imp_val,fill=imp_val))+
     geom_bar(stat="identity", position="dodge")+ coord_flip()+
     ylab("Variable Importance")+
@@ -33,7 +33,7 @@ cforest_LUR = function (variabledf, y_varname= c("day_value","night_value", "val
     scale_fill_gradient(low="red", high="blue")
 
   print(imp_plot)
-
+}
   pre_rf <- predictions(predict(rf3, data =x_test  ))
   #rf_residual <- pre_rf -  rdf_test$NO2
 

@@ -9,7 +9,7 @@
 #' @export
 
 
-Lasso = function (variabledf, y_varname= c("day_value","night_value", "value_mean"), training, test, grepstring ="ROAD|pop|temp|wind|Rsp|OMI|eleva|coast")
+Lasso = function (variabledf, vis = T, y_varname= c("day_value","night_value", "value_mean"), training, test, grepstring ="ROAD|pop|temp|wind|Rsp|OMI|eleva|coast")
 {
   pre_mat = subset_grep(variabledf, grepstring)
   pre_mat_tr = pre_mat[training,]
@@ -19,9 +19,10 @@ Lasso = function (variabledf, y_varname= c("day_value","night_value", "value_mea
 
   cvfit <- glmnet::cv.glmnet(as.matrix(pre_mat_tr),y_tr_value ,type.measure = "mse",standardize=TRUE,alpha = 0.5,lower.limit=0)
  # print( coef(cvfit))
-  plot(cvfit)
+  if (vis = T){
+   plot(cvfit)
   Lassoselected(cvfit)
-
+  }
   elastic_pred = predict(cvfit, newx=as.matrix(pre_mat_test))
   error_matrix(y_test_value,elastic_pred)
 }

@@ -9,7 +9,7 @@
 #' @export
 
 
-rf_LUR = function (variabledf, y_varname= c("day_value","night_value", "value_mean"), training, test,  grepstring ="ROAD|pop|temp|wind|Rsp|OMI|eleva|coast", ...)
+rf_LUR = function (variabledf, vis = T, y_varname= c("day_value","night_value", "value_mean"), training, test,  grepstring ="ROAD|pop|temp|wind|Rsp|OMI|eleva|coast", ...)
 {
  prenres = paste(y_varname,"|", grepstring, sep = "")
 pre_mat = subset_grep(variabledf[training,], prenres)
@@ -24,6 +24,7 @@ rf3 <- ranger(formu , data = pre_mat, importance = "impurity")
 print(rf3)
 df = data.frame(imp_val  = rf3$variable.importance)
 
+if (vis = T){
 imp_plot = ggplot(df, aes(x=reorder(rownames(df), imp_val), y=imp_val,fill=imp_val))+
   geom_bar(stat="identity", position="dodge")+ coord_flip()+
   ylab("Variable Importance")+
@@ -32,7 +33,7 @@ imp_plot = ggplot(df, aes(x=reorder(rownames(df), imp_val), y=imp_val,fill=imp_v
   guides(fill=F)+
   scale_fill_gradient(low="red", high="blue")
 
-print(imp_plot)
+print(imp_plot)}
 
 pre_rf <- predictions(predict(rf3, data =x_test  ))
 #rf_residual <- pre_rf -  rdf_test$NO2
