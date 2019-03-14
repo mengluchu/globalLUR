@@ -21,7 +21,7 @@ x_test = variabledf[test,  ]
 formu = as.formula(paste(y_varname,"~.", sep = ""))
 
 rf3 <- ranger(formu , data = pre_mat, importance = "impurity")
-
+print(rf3)
 df = data.frame(imp_val  = rf3$variable.importance)
 
 imp_plot = ggplot(df, aes(x=reorder(rownames(df), imp_val), y=imp_val,fill=imp_val))+
@@ -36,8 +36,7 @@ print(imp_plot)
 
 pre_rf <- predictions(predict(rf3, data =x_test  ))
 #rf_residual <- pre_rf -  rdf_test$NO2
-
-print(error_matrix(y_test, pre_rf))
+return(error_matrix(y_test, pre_rf))
 
 
 }

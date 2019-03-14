@@ -24,7 +24,7 @@ ctree_LUR = function (variabledf, y_varname= c("day_value","night_value", "value
   pre_rf <-  predict(cf, newdata =x_test  )
   #rf_residual <- pre_rf -  rdf_test$NO2
 
-  print(error_matrix(y_test, pre_rf))
+  return(error_matrix(y_test, pre_rf))
 
   print( plot(cf,fitmean = T)) #ctree party
  # return(cf)

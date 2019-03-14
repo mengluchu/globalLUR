@@ -37,7 +37,7 @@ cforest_LUR = function (variabledf, y_varname= c("day_value","night_value", "val
   pre_rf <- predictions(predict(rf3, data =x_test  ))
   #rf_residual <- pre_rf -  rdf_test$NO2
 
-  print(error_matrix(y_test, pre_rf))
+  return(error_matrix(y_test, pre_rf))
 
 
 }
