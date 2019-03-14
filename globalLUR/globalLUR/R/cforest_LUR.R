@@ -23,7 +23,7 @@ cforest_LUR = function (variabledf, vis = T, y_varname= c("day_value","night_val
   rf3 <- cforest(formu , data = pre_mat )
 
   df = data.frame(imp_val  = varimp(rf3))
-  if (vis = T){
+  if (is(vis)  ){
   imp_plot = ggplot(df, aes(x=reorder(rownames(df), imp_val), y=imp_val,fill=imp_val))+
     geom_bar(stat="identity", position="dodge")+ coord_flip()+
     ylab("Variable Importance")+

@@ -24,7 +24,7 @@ rf3 <- ranger(formu , data = pre_mat, importance = "impurity")
 print(rf3)
 df = data.frame(imp_val  = rf3$variable.importance)
 
-if (vis = T){
+if (is(vis)  ){
 imp_plot = ggplot(df, aes(x=reorder(rownames(df), imp_val), y=imp_val,fill=imp_val))+
   geom_bar(stat="identity", position="dodge")+ coord_flip()+
   ylab("Variable Importance")+
