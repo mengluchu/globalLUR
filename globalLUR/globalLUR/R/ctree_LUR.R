@@ -25,7 +25,7 @@ ctree_LUR = function (variabledf, vis = T, y_varname= c("day_value","night_value
   #rf_residual <- pre_rf -  rdf_test$NO2
 
   return(error_matrix(y_test, pre_rf))
-  if (is(vis)  ){
+  if (vis ){
   print( plot(cf,fitmean = T)) #ctree party}
  # return(cf)
 #  cf2=rpart(formu, data=pre_mat)

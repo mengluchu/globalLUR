@@ -19,7 +19,7 @@ Lasso = function (variabledf, vis = T, y_varname= c("day_value","night_value", "
 
   cvfit <- glmnet::cv.glmnet(as.matrix(pre_mat_tr),y_tr_value ,type.measure = "mse",standardize=TRUE,alpha = 0.5,lower.limit=0)
  # print( coef(cvfit))
-  if (is(vis)  ){
+  if ( vis   ){
    plot(cvfit)
   Lassoselected(cvfit)
   }
