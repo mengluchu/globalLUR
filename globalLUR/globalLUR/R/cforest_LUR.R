@@ -9,7 +9,7 @@
 #' @export
 
 
-cforest_LUR = function (variabledf, vis = T, y_varname= c("day_value","night_value", "value_mean"), training, test,  grepstring ="ROAD|pop|temp|wind|Rsp|OMI|eleva|coast", ...)
+cforest_LUR = function (variabledf, vis1 = T, y_varname= c("day_value","night_value", "value_mean"), training, test,  grepstring ="ROAD|pop|temp|wind|Rsp|OMI|eleva|coast", ...)
 {
   prenres = paste(y_varname,"|", grepstring, sep = "")
   pre_mat = subset_grep(variabledf[training,], prenres)
@@ -23,7 +23,7 @@ cforest_LUR = function (variabledf, vis = T, y_varname= c("day_value","night_val
   rf3 <- cforest(formu , data = pre_mat )
 
   df = data.frame(imp_val  = varimp(rf3))
-  if (vis ){
+  if (vis1 ){
   imp_plot = ggplot(df, aes(x=reorder(rownames(df), imp_val), y=imp_val,fill=imp_val))+
     geom_bar(stat="identity", position="dodge")+ coord_flip()+
     ylab("Variable Importance")+

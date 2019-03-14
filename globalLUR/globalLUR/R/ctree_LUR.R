@@ -6,7 +6,7 @@
 #' @param grepstring the variable/column names of predictors in Lasso, grepl stlye, e.g. "ROAD|pop|temp|wind|Rsp|OMI|eleva|coast"
 #' @return plot the tree and return the ctree object
 #' @export
-ctree_LUR = function (variabledf, vis = T, y_varname= c("day_value","night_value", "value_mean"), training, test, grepstring ="ROAD|pop|temp|wind|Rsp|OMI|eleva|coast", ...)
+ctree_LUR = function (variabledf, vis1 = T, y_varname= c("day_value","night_value", "value_mean"), training, test, grepstring ="ROAD|pop|temp|wind|Rsp|OMI|eleva|coast", ...)
 {
 
   prenres = paste(y_varname,"|", grepstring, sep = "")
@@ -24,10 +24,11 @@ ctree_LUR = function (variabledf, vis = T, y_varname= c("day_value","night_value
   pre_rf <-  predict(cf, newdata =x_test  )
   #rf_residual <- pre_rf -  rdf_test$NO2
 
-  return(error_matrix(y_test, pre_rf))
-  if (vis ){
-  print( plot(cf,fitmean = T)) #ctree party}
+
+  if (vis1 ){
+  print( plot(cf,fitmean = T)) #ctree party
+  }
  # return(cf)
 #  cf2=rpart(formu, data=pre_mat)
-
+    return(error_matrix(y_test, pre_rf))
 }
