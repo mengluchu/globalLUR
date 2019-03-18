@@ -1,11 +1,11 @@
 #' Boost regression trees for LUR (using b)
 
-#' @param  variabledf the dataframe containing predictors and dependent variable
+#' @param variabledf the dataframe containing predictors and dependent variable
 #' @param y_varname  name of the dependent variable.
 #' @param training the index for the rows used for training.
 #' @param test the index for the rows used for testing.
 #' @param grepstring the variable/column names of predictors in Lasso, grepl stlye, e.g. "ROAD|pop|temp|wind|Rsp|OMI|eleva|coast"
-#' @return  plot variable importance and an error matrix
+#' @return plot variable importance and an error matrix
 #' @export
 
 
