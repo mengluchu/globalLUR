@@ -4,7 +4,7 @@
 \alias{rf_LUR}
 \title{Random forest for LUR (using ranger)}
 \usage{
-rf_LUR(variabledf, y_varname = c("day_value", "night_value",
+rf_LUR(variabledf, vis = T, y_varname = c("day_value", "night_value",
   "value_mean"), training, test,
   grepstring = "ROAD|pop|temp|wind|Rsp|OMI|eleva|coast", ...)
 }

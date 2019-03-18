@@ -4,8 +4,8 @@
 \alias{ctree_LUR}
 \title{Regression tree for LUR (using ctree), mainly for visualisation purpose}
 \usage{
-ctree_LUR(variabledf, y_varname = c("day_value", "night_value",
-  "value_mean"), training,
+ctree_LUR(variabledf, vis1 = T, y_varname = c("day_value",
+  "night_value", "value_mean"), training, test,
   grepstring = "ROAD|pop|temp|wind|Rsp|OMI|eleva|coast", ...)
 }
 \arguments{
