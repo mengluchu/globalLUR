@@ -27,7 +27,7 @@ Brt_LUR = function (variabledf, vis1 = T, y_varname= c("day_value","night_value"
   if (vis1 ){
      gbm.plot(rf3)
   }
-  pre_rf <- predict.gbm( rf3, x_test ,n.trees=rf3$gbm.call$best.trees, type="response") ))
+  pre_rf <- predict.gbm( rf3, x_test ,n.trees=rf3$gbm.call$best.trees, type="response")
   #rf_residual <- pre_rf -  rdf_test$NO2
 
   return(error_matrix(y_test, pre_rf))
