@@ -14,26 +14,24 @@ Brt_LUR = function (variabledf, opti = F, vis1 = T, ntree= 500, y_varname= c("da
   prenres = paste(y_varname,"|", grepstring, sep = "")
   pre_mat = subset_grep(variabledf[training,], prenres)
 
-  Xmat = subset_grep(variabledf[training,], grepstring )
+
   y_test = variabledf[test, y_varname]
   x_test = variabledf[test,  ]
 
-  formu = as.formula(paste(y_varname,"~.", sep = ""))
+
 
  if(opti)
   {
-   rf3 <- gbm.step(data=pre_mat, gbm.x=names(Xmat),gbm.y=y_varname, family="gaussian", tree.complexity = 6, learning.rate = 0.01, bag.fraction = 0.5)
-   ntree = rf3$gbm.call$best.trees
-   }
-  else
-    {
+    Xmat = subset_grep(variabledf[training,], grepstring )
+    rf3 <- gbm.step(data=pre_mat, gbm.x=names(Xmat),gbm.y=y_varname, family="gaussian", tree.complexity = 6, learning.rate = 0.01, bag.fraction = 0.5)
+    ntree = rf3$gbm.call$best.trees
+  } else {
       formu = as.formula(paste(y_varname,"~.", sep = ""))
       rf3 =  gbm(formula = formu, data = pre_mat, distribution = "gaussian",
              n.trees = 500,
              interaction.depth = 6,  shrinkage = 0.01,
              bag.fraction = 0.5 )
-
-    }
+           }
 
   if (vis1 ){
      gbm.plot(rf3)
