@@ -20,8 +20,8 @@
 #require(RColorBrewer)
 sampledf = function(originaldata,fraction=0.8, country2digit=NA, grepstring_rm = "ID|LATITUDE|LONGITUDE|ROAD_0|geometry|countryfullname", rm_neg_col=T){
 
-  buffer_oq_dense = na.omit(originaldata)
-
+ # buffer_oq_dense = na.omit(originaldata)
+  buffer_oq_dense  = originaldata
   if (country2digit%in% buffer_oq_dense$country )
 {
   buffer_oq_dense <- buffer_oq_dense%>% filter(country==country2digit)

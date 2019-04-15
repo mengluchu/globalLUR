@@ -34,7 +34,7 @@ Brt_LUR = function (variabledf, opti = F, vis1 = T, ntree= 500, y_varname= c("da
            }
 
   if (vis1 ){
-     gbm.plot(rf3)
+      plot(rf3)
   }
   pre_rf <- predict.gbm( rf3, x_test ,n.trees=ntree, type="response")
   #rf_residual <- pre_rf -  rdf_test$NO2

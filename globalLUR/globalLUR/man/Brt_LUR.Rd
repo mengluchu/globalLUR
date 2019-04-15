@@ -4,9 +4,9 @@
 \alias{Brt_LUR}
 \title{Boost regression trees for LUR (using b)}
 \usage{
-Brt_LUR(variabledf, vis1 = T, y_varname = c("day_value", "night_value",
-  "value_mean"), training, test,
-  grepstring = "ROAD|pop|temp|wind|Rsp|OMI|eleva|coast", ...)
+Brt_LUR(variabledf, opti = F, vis1 = T, ntree = 500,
+  y_varname = c("day_value", "night_value", "value_mean"), training,
+  test, grepstring = "ROAD|pop|temp|wind|Rsp|OMI|eleva|coast", ...)
 }
 \arguments{
 \item{variabledf}{the dataframe containing predictors and dependent variable}
