@@ -2,7 +2,7 @@
 % Please edit documentation in R/xgboost_LUR.R
 \name{xgboost_LUR}
 \alias{xgboost_LUR}
-\title{xgBoost regression trees for LUR (using b)}
+\title{xgBoost regression trees for LUR}
 \usage{
 xgboost_LUR(variabledf, opti = F, vis1 = T, max_depth = 4, eta = 1,
   nthread = 2, nrounds = 10, y_varname = c("day_value",
@@ -24,5 +24,5 @@ xgboost_LUR(variabledf, opti = F, vis1 = T, max_depth = 4, eta = 1,
 plot variable importance and an error matrix
 }
 \description{
-xgBoost regression trees for LUR (using b)
+xgBoost regression trees for LUR
 }
