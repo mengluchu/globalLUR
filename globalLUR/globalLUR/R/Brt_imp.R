@@ -24,4 +24,4 @@ Brt_imp = function (variabledf, opti = F,  ntree= 500, y_varname= c("day_value",
 
   m = m %>%select(rel.inf)
 }
-ntree=500
+

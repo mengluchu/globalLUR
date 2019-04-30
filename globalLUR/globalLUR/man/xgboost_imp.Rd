@@ -4,8 +4,8 @@
 \alias{xgboost_imp}
 \title{return variable importance xgboost}
 \usage{
-xgboost_imp(variabledf, max_depth = 4, eta = 1, nthread = 2,
-  nrounds = 10, y_varname = c("day_value", "night_value",
+xgboost_imp(variabledf, max_depth = 4, eta = 0.02, nthread = 2,
+  nrounds = 300, y_varname = c("day_value", "night_value",
   "value_mean"), training, test,
   grepstring = "ROAD|pop|temp|wind|Rsp|OMI|eleva|coast", ...)
 }
