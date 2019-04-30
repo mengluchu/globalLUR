@@ -28,7 +28,7 @@ Brt_LUR = function (variabledf, opti = F, vis1 = T, ntree= 500, y_varname= c("da
   } else {
       formu = as.formula(paste(y_varname,"~.", sep = ""))
       rf3 =  gbm(formula = formu, data = pre_mat, distribution = "gaussian",
-             n.trees = 500,
+             n.trees = ntree,
              interaction.depth = 6,  shrinkage = 0.01,
              bag.fraction = 0.5 )
            }
