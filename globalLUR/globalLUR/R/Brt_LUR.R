@@ -9,7 +9,7 @@
 #' @export
 
 
-Brt_LUR = function (variabledf, opti = F, vis1 = T, ntree= 500, y_varname= c("day_value","night_value", "value_mean"), training, test,  grepstring ="ROAD|pop|temp|wind|Rsp|OMI|eleva|coast", ...)
+Brt_LUR = function (variabledf, opti = F, vis1 = T, ntree= 1000, y_varname= c("day_value","night_value", "value_mean"), training, test,  grepstring ="ROAD|pop|temp|wind|Rsp|OMI|eleva|coast", ...)
 {
   prenres = paste(y_varname,"|", grepstring, sep = "")
   pre_mat = subset_grep(variabledf[training,], prenres)
