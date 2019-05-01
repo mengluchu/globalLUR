@@ -30,5 +30,5 @@ error_matrix = function(validation, prediction)
   MAE1=MAE(validation, prediction)
 
   IQR1 = IQR(validation, prediction)
-  c(rmse = rmse1, MAE=MAE1, IQR=IQR1)
+  c(RMSE = rmse1, MAE=MAE1, IQR=IQR1)
 }
