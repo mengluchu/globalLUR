@@ -9,7 +9,7 @@
 #' @export
 
 
-rf_LUR = function (variabledf, vis = T, num.trees=2000, mtry = 33, y_varname= c("day_value","night_value", "value_mean"), training, test,  grepstring ="ROAD|pop|temp|wind|Rsp|OMI|eleva|coast", ...)
+rf_LUR = function (variabledf, vis = T, numtrees=2000, mtry = 33, y_varname= c("day_value","night_value", "value_mean"), training, test,  grepstring ="ROAD|pop|temp|wind|Rsp|OMI|eleva|coast", ...)
 {
  prenres = paste(y_varname,"|", grepstring, sep = "")
 pre_mat = subset_grep(variabledf[training,], prenres)
@@ -20,7 +20,7 @@ x_test = variabledf[test,  ]
 
 formu = as.formula(paste(y_varname,"~.", sep = ""))
 
-rf3 <- ranger(formu , data = pre_mat,num.trees = num.trees, mtry = mtry, importance = "impurity")
+rf3 <- ranger(formu , data = pre_mat,num.trees = numtrees, mtry = mtry, importance = "impurity")
 print(rf3)
 df = data.frame(imp_val  = rf3$variable.importance)
 
