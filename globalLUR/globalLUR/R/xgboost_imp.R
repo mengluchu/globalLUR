@@ -18,7 +18,7 @@ xgboost_imp = function (variabledf,  max_depth =4, eta =0.02, nthread =2, nround
 
   outputvec = variabledf[training, y_varname]
   bst <- xgboost(data = dfmatrix, label = outputvec, max_depth = max_depth,
-                 eta = eta, nthread = nthread, nrounds = nrounds)
+                 eta = eta, nthread = nthread, nrounds = nrounds,verbose = 0)
 
   df_test= data.table(x_test, keep.rownames = F)
 
