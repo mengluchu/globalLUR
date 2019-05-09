@@ -8,7 +8,7 @@ rf_imp = function (variabledf, numtrees = 2000,
 
   formu = as.formula(paste(y_varname,"~.", sep = ""))
 
-  rf3 <- ranger(formu , data = pre_mat,  num.trees = numtrees, mtry = mtry, importance = "impurity")
+  rf3 <- ranger(formu , data = pre_mat,  num.trees = numtrees, mtry = mtry, importance = "permutation")
 
   df = data.frame(imp_val  = rf3$variable.importance)
 }
