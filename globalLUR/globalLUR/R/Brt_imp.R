@@ -20,7 +20,7 @@ Brt_imp = function (variabledf, opti = F,  ntree= 1000, y_varname= c("day_value"
                bag.fraction = 0.5 )
   }
 
-  m = summary(rf3,plotit = F)
+  m = summary(rf3, method = permutation.test.gbm, plotit = F)
 
   m = m %>%select(rel.inf)
 }
