@@ -1,0 +1,578 @@
+```{r global_options, include=FALSE}
+knitr::opts_chunk$set(fig.width=12, fig.height=8, fig.path='Figs_geohub/',
+                      echo=T, warning=FALSE, message=FALSE)
+```
+ 
+
+Required packages
+```{r, include=F}
+ipak <- function(pkg){
+ 
+   new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
+   if (length(new.pkg)) 
+    install.packages(new.pkg, dependencies = TRUE, repos='http://cran.muenster.r-project.org')
+  sapply(pkg, require, character.only = TRUE)
+}
+packages <- c( "sp","maptools","raster", "sf","dplyr", "glmnet","ggplot2" , "tidyr", "RColorBrewer","devtools", "corrplot","ranger","tmap","countrycode","reshape2" )
+ipak(packages)
+
+```
+
+Auxilary package
+```{r}
+install_github("mengluchu/globalLUR/globalLUR/globalLUR")
+library(globalLUR)
+ls("package:globalLUR")
+```
+
+
+###Preparation
+
+Get 3 color pallets.
+```{r}
+colorB = brewer.pal(7,"Greens")
+colorG = brewer.pal(11,"PiYG")
+colorS = brewer.pal(11, "Spectral")
+```
+
+```{r}
+set.seed(2)
+```
+
+Load data
+```{r}
+load("mergedu.Rdata")
+load("countrywithppm.R") # countries with ppm
+```
+
+Fill missing data with NA. Merge roads of different road types, the road length of these road types are aggregated. The original road types are substituted (with keep =T, they are remained). 
+
+ 
+```{r mergeroads}
+names(merged)
+merged_1 = na_if(merged,-1)
+#summary(merged_1)
+merged_mr = merge_roads(merged_1,c(3,4,5), keep = F)
+names(merged_mr)
+#numeric country
+#inde_var$country=as.numeric(inde_var$country)
+```
+
+
+### Visualization
+
+Visualize with tmap: convenient
+```{r}
+locations_sf = st_as_sf(merged_mr, coords = c("LONGITUDE","LATITUDE"))
+ 
+ 
+#plot(spmerged["ROAD_1_50"])
+# breaks = c(2e+3, 2e+4, 2e+5,5e+5, 2e+6 )
+
+
+osm_valuemean = tm_shape(locations_sf) +
+  tm_dots( "value_mean", col = "value_mean", size = 0.05,
+     popup.vars = c("value_mean","day_value","night_value","ROAD_2_100","ROAD_2_5000"))+ tm_view(basemaps = c('OpenStreetMap'))
+#+tm_shape(lnd)+tm_lines()
+tmap_save(osm_valuemean, filename="C:/Users/Lu000012/Documents/files/GLOBAL_LUR/NO2mean.html")
+
+```
+
+Visualize with leaflet. show Day/night ratio, red: day/night >1, blue, day/nigh <1 
+
+```{r}
+library(leaflet)
+library(mapview)
+library(htmlwidgets)
+
+merged_fp = merged_mr%>%mutate(ratiodn = day_value/night_value)%>%mutate(color= ifelse(ratiodn>1, "red", "blue"))
+
+m  = leaflet(merged_fp)%>%
+  addTiles()%>%addCircleMarkers(radius = ~value_mean/5, color = ~color, popup =  ~as.character(value_mean),fill = FALSE) %>% addProviderTiles(providers$Esri.NatGeoWorldMap)%>%addMouseCoordinates()%>% 
+  addHomeButton(ext = extent(116.2,117,39.7, 40), layer.name = "Beijing")%>% addHomeButton(ext = extent(5,5.2,52,52.2), layer.name = "Utrecht")
+#m
+
+saveWidget(m, file="NO2daynight.html")
+```
+
+Boxplot
+
+```{r}
+ 
+countryname =   paste(merged_mr$country, countrycode(merged_mr$country, 'iso2c', 'country.name'), sep = ":") 
+
+#tag country with ppm 
+countryname_s_e=ifelse( merged_mr$country%in%countrywithppm[countrywithppm%in%merged_mr$country], paste(countryname,"*", sep = ""), countryname)
+merged_mr$countryfullname = countryname_s_e
+
+# use the median for colour
+mergedmedian = merged_mr%>%group_by(country)%>% mutate(median =  median(value_mean, na.rm = TRUE))
+
+ 
+bp2 <- ggplot(mergedmedian, aes(x=countryfullname, y=value_mean, group=country)) +  labs(x = "Country", y = expression(paste("NO"[2],"  " , mu,"g/","m"^3)), cex = 1.5)+
+  geom_boxplot(aes(fill =median))+theme(text = element_text(size=13), axis.text.x = element_text(angle = 90, hjust = 1)) +scale_fill_distiller(palette = "Spectral")
+#   scale_color_brewer(direction = 1)
+print( bp2+ ylim(0, 100))
+```
+
+
+ 
+ 
+Plot the paired correlation, for  road predictors, population, Tropomi.  For DE, CN, and world
+ 
+```{r}
+ 
+ library(dplyr)
+ merged_mr%>%na.omit%>%filter(country=="DE")%>%dplyr::select(matches("_value|ROAD|pop|Trop"))%>%cor%>%corrplot(type = "upper", method = "pie", tl.cex = 0.7)
+    
+ merged_mr%>%na.omit%>%filter(country=="CN")%>%dplyr::select(matches("_value|ROAD|pop|Trop"))%>%cor%>%corrplot(type = "upper", method = "pie", tl.cex = 0.7)
+       
+ merged_mr%>%na.omit%>%dplyr::select(matches("_value|ROAD|pop|Trop"))%>%cor%>%corrplot(type = "upper", method = "pie", tl.cex = 0.7)
+ 
+
+#corrplot(cor(s),type = "upper", method ="ellipse", tl.cex= 0.5)
+```
+
+
+Spatial dependency
+```{r}
+library(gstat)
+grd_sp <- as_Spatial(locations_sf)
+dt.vgm = variogram(value_mean~1,grd_sp)
+plot(dt.vgm)
+ 
+dt.vgm = variogram(value_mean~1,grd_sp, cutoff = 10)
+plot(dt.vgm)
+
+
+
+
+countryvariogram = function(COUN, cutoff){
+loca =  locations_sf%>%filter(country ==COUN)
+grd_sp <- as_Spatial(loca)
+
+dt.vgm = variogram(value_mean~1,grd_sp, cutoff = cutoff)
+plot(dt.vgm)
+}
+countryvariogram("DE") 
+countryvariogram("DE", 1) 
+
+countryvariogram("US") 
+
+countryvariogram("CN", 1)
+ 
+countryvariogram("CN")
+
+#Moran I test
+#install.packages("ape", dependencies = TRUE)
+#library(ape)
+
+#merged_mrf =  merged_mr%>%filter(country == "US")
+#no2.dists <- as.matrix(dist(cbind(merged_mrf$LONGITUDE, merged_mrf$LATITUDE)))
+#no2.dists[1:5, 1:5]
+#no2.inv <- 1/no2.dists
+#diag(no2.inv) <- 0
+#no2.inv[1:5, 1:5]
+#Moran.I(merged_mrf$value_mean, na.rm = T, no2.inv) 
+#head(merged_mr)
+
+
+```
+
+### Data preprocessing:
+0) add variables by ID or by rasters (not in this document). 
+1) remove unwanted columns or records, 
+2) select records (e.g. by country), separate testing and training sets.
+ 
+ 
+
+Separate the dataset into training and  test dataset with a fraction (her 80\% of the records are used for training, the rest for testing), "DE" is the two digit for germany. If for world, the sampling uses the fraction per country. 
+```{r}
+#merged = merge(merged, stat[,-which(names(stat)%in%c("LATITUTE", "LONGITUDE"))], by = "ID", all.x = T)
+
+ 
+```
+
+
+#### Germany as an example
+```{r sample}
+
+
+response_predictor= globalLUR::sampledf(merged_mr,fraction = 0.8, country2digit = "DE" ,grepstring_rm = "ID|LATITUDE|LONGITUDE|countryfullname")
+
+```
+
+
+```{r, eval = F}
+#Differences between day and night values
+plot(with(response_predictor$inde_var,day_value-night_value), typ = "h")
+abline(h=0)
+```
+
+Retrieve test, training, and all variables.  
+```{r}
+test = response_predictor$test
+training = response_predictor$training
+inde_var = response_predictor$inde_var
+inde_var = inde_var%>%dplyr::select(-country)
+#summary(inde_var)
+```
+
+
+ 
+```{r size}
+length(test)
+length(training)
+```
+
+ 
+```{r eval=F }
+#Checkt uni-variant R square. Caculate the r-sq for day, night and mean, and bind the columns to form a dataframe for plotting. 
+ 
+rsqmean = univar_rsq(inde_var[,-which(grepl("value_mean|day_|night_",names(inde_var)))],inde_var$value_mean)
+
+rsqday = univar_rsq(inde_var[,-which(grepl("value_mean|day_|night_",names(inde_var)))],inde_var$day_value)
+
+rsqnight = univar_rsq(inde_var[,-which(grepl("value_mean|day_|night_",names(inde_var)))],inde_var$night_value)
+
+rsqdf= cbind(rsqmean,rsqday,rsqnight, rownames(rsqmean))  
+names(rsqdf)= c("mean","day","night","vars")
+
+plot_rsq(rsqdf = rsqdf, varname = "vars",xlab = "predictors", ylab = "R-squared")
+```
+
+The scatter plots between predictors and responses, mean 
+```{r scatterplot}
+#pre_mat = inde_var_train[,which(grepl("ROAD|pop|value_mean|day_value|night_value|temp|wind|Rsp|OMI|eleva|coast|I_1", names(inde_var_train)))]
+
+
+#scatterplot(inde_var,"value_mean", "gam" )
+scatterplot(inde_var,"day_value", "gam")
+scatterplot(inde_var,"night_value", "gam")
+ 
+ 
+```
+
+
+
+### Modelling
+1) Tree based
+2) Lasso
+3) Mechanical model (nls) 
+
+Extra: 
+5) Separate urban/rural hirachical/ two-step linear regression
+6) mixed effects regression 
+
+##### LM: linear regression model 
+
+If simply using linear regression, the mean, day, night. Predictors are population, temperature, wind speed, GEOM product, OMI tropo column, elevation, and road buffers. 
+
+i.e. ROAD|population|value_mean|temperature|wind|GEOM product|OMI|elevation. 
+
+Note population is not always significant, though the individual R square for each buffer is high. The prediction for night is much better than for the day
+
+
+ 
+
+###### Regression tree and random forest. The prediction is so far the best.  For night the prediction error is much lower. Also indicated in the validation. 
+```{r}
+library(party)
+ set.seed(2)
+ 
+ ctree_LUR(inde_var, y_varname= c("day_value"), training=training, test= test, grepstring ="ROAD|pop|temp|wind|Rsp|OMI|eleva|coast|I_1|Tropo" )
+ 
+```
+
+Creates diverse set of trees because
+1) trees are instable w.r.t. changes in learning/training data (bagging)
+2) randomly preselect mtry splitting variables in each split  
+
+The tree and prediction error will be different if shuffeling training and testing data. 
+```{r eval = T}
+for (i in 2:5)
+{set.seed(i)
+a= globalLUR::sampledf(merged_mr,fraction = 0.8, "DE" )
+test = a$test
+training = a$training
+inde_varexp = a$inde_var
+#summary(inde_var)
+ctree_LUR(inde_varexp, y_varname= c("day_value"), training=training, test= test, grepstring ="ROAD|pop|temp|wind|Rsp|OMI|eleva|coast|I_1|Tropomi" )
+}
+
+```
+
+
+Random forest: cforest is much slower than ranger. The prediction error should be similar. 
+```{r}
+ set.seed(2)
+rf_LUR(inde_varexp, y_varname= c("day_value"), training=training, mtry = 33, numtrees = 2000, test=test, grepstring ="ROAD|pop|temp|wind|Rsp|OMI|eleva|coast|I_1" )
+
+rf_LUR(inde_varexp, y_varname= c("day_value"), training=training, mtry = 20, numtrees = 2000, test=test, grepstring ="ROAD|pop|temp|wind|Rsp|OMI|eleva|coast|I_1" )
+
+rf_LUR(inde_varexp, y_varname= c("day_value"), training=training, mtry = 20, numtrees = 1000, test=test, grepstring ="ROAD|pop|temp|wind|Rsp|OMI|eleva|coast|I_1" )
+```
+
+
+```{r}
+inde_varexp= inde_var
+inde_var_train = inde_varexp[training,]
+inde_var_test = inde_varexp[test,]
+```
+
+model training and parameter tuning
+```{r}
+library(caret)
+names(getModelInfo())
+ 
+```
+```{r}
+inde_var_train= subset_grep(inde_var_train,"ROAD|pop|temp|wind|Rsp|OMI|eleva|coast|I_1|Tropomi|value_mean")
+model_rf= train(value_mean ~ ., data=inde_var_train, method='rf') # mtry
+plot(model_rf)
+
+fitted <- predict(model_rf, inde_var_test)
+error_matrix(prediction = fitted, validation = inde_var_test$value_mean)
+```
+```{r}
+#model_gbm= train(value_mean ~ ., data=inde_var_train, method='gbm')
+#plot(model_gbm)
+#gbm.step optimal number of trees. 
+
+```
+
+```{r ensemble, eval=FALSE}
+#install.packages("caretEnsemble")
+library(caretEnsemble)
+
+# Stacking Algorithms - Run multiple algos in one call.
+trainControl <- trainControl(method="repeatedcv", 
+                             number=10, 
+                             repeats=2,
+                             savePredictions=TRUE, 
+                             classProbs=TRUE)
+
+algorithmList <- c('rf', 'adaboost', 'earth', 'xgbDART', 'svmRadial')
+
+set.seed(100)
+models <- caretList(value_mean ~ ., data=inde_var_train, trControl=trainControl, methodList=algorithmList) 
+results <- resamples(models)
+summary(results)
+```
+
+#### Random forest
+
+```{r ranger}
+pre_mat = subset_grep(inde_var_train, grepstring = "ROAD|pop|value_mean|temp|wind|eleva|coast|I_1|Trop")
+rf = ranger(value_mean~ ., data = pre_mat, mtry = 33, num.trees = 2000,importance = "permutation")
+rf
+```
+ 
+Important variables and Partial plots 
+```{r}
+importance(rf)
+#install.packages("vip")
+library(vip)
+list_metrics()
+
+DF_P_r2 = vi(rf, method = "permute", target = "value_mean", metric = "r2" ) 
+DF_P_rmse = vi(rf, method = "permute", target = "value_mean", metric = "rmse") 
+ 
+#DF = vi(rf, method = "ice", target = "value_mean") 
+vip (DF_P_rmse)
+ 
+#install.packages("DT")
+#install.packages("sparkline") 
+```
+
+```{r}
+#rf = ranger(value_mean~ ., data = pre_mat, mtry = 33, num.trees = 2000,importance = "permutation")
+#DF2 = data.frame(var = names(importance(rf)), importance.rf = importance(rf))
+#DF2 =  arrange(DF2, desc(importance.rf)) 
+#DF
+#DF2
+#ggplot(DF2, aes(y=importance.rf, x=var))+ 
+#      geom_bar(stat="identity", position="dodge")+ coord_flip()+
+#      ylab("Variable Importance")+
+#      xlab("")+
+#      ggtitle("Information Value Summary")+
+#      guides(fill=F)+
+#      scale_fill_gradient(low="red", high="blue")
+```
+
+partial dependence plots: all the variables. (using sparklines takes a while)
+```{r pdp, eval = F}
+library(DT)
+library(sparkline)
+a=add_sparklines(DF, fit = rf)
+library(htmlwidgets)
+saveWidget(a, file="sparkline.html")
+
+
+
+```
+
+
+Partial dependence plot of selected variables
+```{r}
+library(GGally)
+pre_mat_s = inde_var_train%>%select(value_mean, ROAD_2_50, pop3k, ROAD_M345_300) 
+
+
+
+
+lm_s = lm(value_mean~., data = pre_mat_s)
+
+rf_s = ranger(value_mean~ ., data = pre_mat_s, num.trees = 2000,importance = "permutation")
+rf_s
+```
+
+correlation 
+```{r}
+pre_mat_predictor = pre_mat_s%>%select(-value_mean) 
+ggpairs(pre_mat_predictor)
+```
+```{r}
+
+
+
+library(pdp)
+
+ 
+p_lm=partial(lm_s, "ROAD_M345_300",plot = TRUE, rug = TRUE)
+plot(p_lm)
+
+p2=partial(rf_s, "ROAD_M345_300",plot = TRUE, rug = TRUE)
+plot(p2)
+
+```
+
+```{r}
+
+
+#slow
+pd <- partial(rf_s, pred.var = c("pop3k", "ROAD_M345_300"  ))
+
+# Default PDP
+pd1 = plotPartial(pd)
+
+# Add contour lines and use a different color palette
+rwb <- colorRampPalette(c("red", "white", "blue"))
+pdp2= plotPartial(pd, contour = TRUE, col.regions = rwb)
+ 
+# 3-D surface
+#pdp3 <- plotPartial(pd, levelplot = F, zlab = "ROAD_1_50", colorkey = T, 
+ #                   screen = list(z = -20, x = -60) )
+
+
+
+p3= partial(rf_s, "ROAD_2_50",plot = TRUE, rug = TRUE)
+p1 = partial(rf_s, "pop3k",plot = TRUE, rug = TRUE)
+grid.arrange(p1, p2,p3, pd1, pdp2 , ncol = 2)
+
+```
+
+ 
+ 
+#### Gradient boosting
+
+```{r gradientboostingtree}
+ 
+library(gbm)
+gbm1 =  gbm(formula = value_mean~., data = pre_mat, distribution = "gaussian", n.trees = 2000,
+  interaction.depth = 6, shrinkage = 0.01, bag.fraction = 0.5 )
+
+names(pre_mat)
+plot(gbm1, i.var = 2:3)
+plot(gbm1, i.var = 1)
+#plot(gbm1, i.var = 2)
+#plot(gbm1, i.var = 3)
+
+summary(gbm1)
+ 
+#rf_residual <- pre_rf -  rdf_test$NO2
+
+```
+
+
+###### LASSO 
+
+In Sequence, mean, day , night. The predicton errors are much higher than random forest, but used a much simpler model 
+The variables selected are slightly different from each other. The variables selected each time are also different. 
+
+```{r}
+
+Lasso(inde_var, vis1 = T, y_varname =  "value_mean",training=training, test=test)
+Lasso(inde_var,vis1 = T, y_varname = "day_value", test,training=training, test=test)
+Lasso(inde_var, vis1 = T,y_varname = "night_value", training=training, test=test)
+ 
+ 
+```
+
+ 
+
+```{r}
+install.packages("sperrorest")
+library(sperrorest)
+CN_df = merged_mr%>%filter(country == "CN")%>%dplyr::select(-day_value, -value_mean, -ID, -country)
+
+#makeRegrTask(data , target  coordinates)
+#makelearner 
+
+names(CN_df)
+library(pacman)
+p_load(sperrorest)
+data("maipo", package = "sperrorest")
+head(maipo)
+
+mypred_part <- function(object, newdata) predict(object, newdata)$predictions
+f1 =  value_mean ~ ROAD_M345_300 + pop1k  
+CN_sptest= sperrorest(formula =f1, 
+                      data = CN_df, 
+                      model_fun = ranger,
+                      coords = c("LONGITUDE", "LATITUDE"),
+                      model_args = list( num.trees = 2000),
+                      pred_fun = mypred_part,
+                      progress = TRUE, 
+                       pred_args = list(fac = "Tropomi_2018"),
+                      smp_args = list(repetition = 1 , nfold =10))
+
+resamp <- partition_factor_cv(CN_df, nfold = 5, repetition = 1:1,coords = c("LONGITUDE", "LATITUDE"), fac = "Tropomi_2018")
+plot(resamp,CN_df,coords = c("LONGITUDE", "LATITUDE"))
+plot(resamp, maipo, coords = c("utmx","utmy"))
+
+names(CN_df)
+data(ecuador)
+fo <- slides ~ dem + slope + hcurv + vcurv + log.carea + cslope
+
+
+CN_sptest= sperrorest(data = ecuador, formula = fo, 
+                      model_fun = glm,
+                      model_args = list( family  = "binomial"),
+                      pred_fun = predict,
+                      pred_args = list(type = "response"),
+                      smp_fun = partition_kmeans,
+                      smp_args = list(repetition = 1 , nfold =5), 
+                      par_args = list(par_mode = "future"),
+                      importance = TRUE, imp_permutations = 10)
+summary(CN_sptest$importance)
+
+CN_sptest= sperrorest(formula = day_value ~ pop1k + Tropomi_2018 + ROAD_M345_5000 + pop3k, 
+                      data = CN_df, 
+                      coords = c("LONGITUDE", "LATITUDE"),
+                      model_fun = glm,
+                      model_args = list( family  = "binomial"),
+                      pred_fun = predict,
+                      
+                      pred_args = list(type = "response"),
+                      smp_fun = partition_kmeans,
+                      smp_args = list(repetition = 1 , nfold =5), 
+                      par_args = list(par_mode = "future"),
+                      importance = TRUE, imp_permutations = 10)
+
+a =ranger(value_mean~., data = inde_var_train)
+predict(a,inde_var_test)$predictions
+str(predict(a, inde_var_test))
+```
+
+ 
