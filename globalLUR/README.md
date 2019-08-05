@@ -1,3 +1,4 @@
+
 ### GlobalLUR is the R package for auxilary functions used in the project "Statistical method of global air pollution modeling"
   
 ```
@@ -30,3 +31,30 @@ a novel method developed for air pollution modeling with an attempt to integrati
 
 - "xboost_..", "Brt_..", "rf_..", "Lasso", "cforest_..", "ctree_..",   
 wrapping functions created for calculating error matrix and importance variables, when applicable.  
+
+ 
+##### Preprocessing: 
+Adding variable, merging road types, separate training and testing, prepare dataframe for modeling
+
+*  join_by_id          
+*  mergeraster2file
+*  merge_roads      
+*  sampledf 
+     
+##### Data exploration: 
+Scatter plot, inspecting and comparing correlations between variables.
+
+* plot_rsq
+* RDring_coef         
+* scatterplot             
+* univar_rsq      
+
+##### Modelling and validation: 
+Plotting and error matrices as results of different modeling: LM, Random forest, Lasso, mechanical model.
+* create_ring          
+* error_matrix 
+* Lasso                
+* Lassoselected
+* mechanical
+* plot_error          
+
