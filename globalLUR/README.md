@@ -1,5 +1,6 @@
 
-### GlobalLUR is the R package for auxilary functions used in the project "Statistical method of global air pollution modeling"
+### GlobalLUR 
+#### R package for auxilary functions used in the project "Statistical method of global air pollution modeling"
   
 ```
 install_github("mengluchu/globalLUR/globalLUR/globalLUR") 
