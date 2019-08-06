@@ -1,6 +1,6 @@
 ```{r global_options, include=FALSE}
 knitr::opts_chunk$set(fig.width=12, fig.height=8, fig.path='Figs_geohub/',
-                      echo=T, warning=FALSE, message=FALSE)
+                      echo=T, include = T, warning=FALSE, message=FALSE)
 ```
  
 
@@ -501,8 +501,7 @@ In Sequence, mean, day , night. The predicton errors are much higher than random
 The variables selected are slightly different from each other. The variables selected each time are also different. 
 
 ```{r}
-
-Lasso(inde_var, vis1 = T, y_varname =  "value_mean",training=training, test=test)
+ 
 Lasso(inde_var,vis1 = T, y_varname = "day_value", test,training=training, test=test)
 Lasso(inde_var, vis1 = T,y_varname = "night_value", training=training, test=test)
  
@@ -510,8 +509,35 @@ Lasso(inde_var, vis1 = T,y_varname = "night_value", training=training, test=test
 ```
 
  
+##### Mechanical model 
 
+ USing the ring of roads. THe road length in each ring could be normalised by the area of the ring (becomes road length density, not done in this model, can choose normalise =T). However, the coefficents of the regression do not increase or decrease with roadrings further away. Looks the 5000m is dominating. If removing this parameter, the 1000m dominates. The coefficients
+ 
+ 
+coefficients for different road types as a function of road ring for different road types
 ```{r}
+names(inde_var)
+buffers_in = c(0,25,50,100,300,500,800,1000,3000)
+buffers_out = c(25, 50,100,300,500,800, 1000,3000,5000)
+RDring_coef(inde_var,  quote(day_value),buffers_in = buffers_in,buffers_out = buffers_out, number_roadtypes = 3) 
+```
+
+additional variable pop1k, 3k, elevation, sequentially  
+```{r}
+ 
+
+
+distance_center = (buffers_out-buffers_in)/2 + buffers_in
+
+mechanical(inde_var,"day_value","pop1k", distance_centre = distance_centre, training=training, test = test, norma = F,buffers_in = buffers_in,buffers_out = buffers_out)
+ 
+```
+
+
+
+ 
+
+```{r eval=FALSE}
 install.packages("sperrorest")
 library(sperrorest)
 CN_df = merged_mr%>%filter(country == "CN")%>%dplyr::select(-day_value, -value_mean, -ID, -country)
