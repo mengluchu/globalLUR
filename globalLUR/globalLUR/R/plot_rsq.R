@@ -6,22 +6,18 @@
 #' @return the dataframe of  r square with each predictor
 #' @export
 
-plot_rsq= function(predictor_matrix=NA, response=NA,rsqdf= NA, varname=NA, xlab = NA, ylab = NA)
-{
-  if (!is.na(rsqdf))
-  {
-    a5= melt(rsqdf, id = varname)
-
-    ag= ggplot(a5 ,aes(x=vars, y = value , colour= variable)) +
-      geom_point() + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))+ labs(x = xlab, y=ylab)
-     print(ag)
-
-  }
-  else{
-  a = univar_rsq(predictor_matrix = predictor_matrix,response = response)
-  ag = ggplot(a,aes(x=row.names(a),y=rsq))+geom_point() +labs(x = xlab, y =ylab)+ theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))
-  print(ag)
-  }
+plot_rsq = function(predictor_matrix = NA, response = NA, rsqdf = NA, varname = NA, xlab = NA, ylab = NA) {
+    if (!is.na(rsqdf)) {
+        a5 = melt(rsqdf, id = varname)
+        
+        ag = ggplot(a5, aes(x = vars, y = value, colour = variable)) + geom_point() + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) + labs(x = xlab, y = ylab)
+        print(ag)
+        
+    } else {
+        a = univar_rsq(predictor_matrix = predictor_matrix, response = response)
+        ag = ggplot(a, aes(x = row.names(a), y = rsq)) + geom_point() + labs(x = xlab, y = ylab) + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))
+        print(ag)
+    }
 }
 
 
