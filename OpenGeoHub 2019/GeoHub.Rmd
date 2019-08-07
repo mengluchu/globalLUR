@@ -13,12 +13,20 @@ ipak <- function(pkg){
     install.packages(new.pkg, dependencies = TRUE, repos='http://cran.muenster.r-project.org')
   sapply(pkg, require, character.only = TRUE)
 }
-packages <- c( "sp","maptools","raster", "sf","dplyr", "glmnet","ggplot2" , "tidyr", "RColorBrewer","devtools", "corrplot","ranger","tmap","countrycode","reshape2" )
+stdata = c("sp", "sf", "raster")
+Stat_methods = c("glmnet", "ranger", "gbm", "xgboost", "party","caret")
+visual = c("RColorBrewer", "ggplot2", "corrplot","tmap", "leaflet", "mapview", "pdp", "vip", "DT", "sparkline")
+map = c("maptools")
+tidy = c("devtools", "dplyr",  "tidyr", "reshape2")
+other = c("countrycode","htmlwidgets","data.table")
+ 
+
+packages <- c(stdata, tidy, Stat_methods, visual, map, other)
 ipak(packages)
 
 ```
 
-Auxilary package
+Auxilary package with data
 ```{r}
 install_github("mengluchu/globalLUR/globalLUR/globalLUR")
 library(globalLUR)
@@ -41,17 +49,19 @@ set.seed(2)
 
 Load data
 ```{r}
-load("mergedu.Rdata")
-load("countrywithppm.R") # countries with ppm
+# add data usethis::use_data()
+data("merged")
+data("countrywithppm") # countries with ppm (parts per million)
+names(merged)
 ```
 
 Fill missing data with NA. Merge roads of different road types, the road length of these road types are aggregated. The original road types are substituted (with keep =T, they are remained). 
 
  
 ```{r mergeroads}
-names(merged)
+#tag missing data to NA
 merged_1 = na_if(merged,-1)
-#summary(merged_1)
+#merge roads
 merged_mr = merge_roads(merged_1,c(3,4,5), keep = F)
 names(merged_mr)
 #numeric country
@@ -68,22 +78,23 @@ locations_sf = st_as_sf(merged_mr, coords = c("LONGITUDE","LATITUDE"))
  
 #plot(spmerged["ROAD_1_50"])
 # breaks = c(2e+3, 2e+4, 2e+5,5e+5, 2e+6 )
-
-
+ 
 osm_valuemean = tm_shape(locations_sf) +
   tm_dots( "value_mean", col = "value_mean", size = 0.05,
      popup.vars = c("value_mean","day_value","night_value","ROAD_2_100","ROAD_2_5000"))+ tm_view(basemaps = c('OpenStreetMap'))
+
 #+tm_shape(lnd)+tm_lines()
-tmap_save(osm_valuemean, filename="C:/Users/Lu000012/Documents/files/GLOBAL_LUR/NO2mean.html")
+#filename="C:/Users/Lu000012/Documents/files/GLOBAL_LUR/NO2mean.html"
+
+tmap_save(osm_valuemean,"NO2mean.html")
 
 ```
 
-Visualize with leaflet. show Day/night ratio, red: day/night >1, blue, day/nigh <1 
+Visualize with leaflet: more control.
+show Day/night ratio, red: day/night >1, blue, day/nigh <1 
 
 ```{r}
-library(leaflet)
-library(mapview)
-library(htmlwidgets)
+
 
 merged_fp = merged_mr%>%mutate(ratiodn = day_value/night_value)%>%mutate(color= ifelse(ratiodn>1, "red", "blue"))
 
@@ -137,8 +148,6 @@ Plot the paired correlation, for  road predictors, population, Tropomi.  For DE,
 Spatial dependency
 ```{r}
 library(gstat)
-#st_as_sf(merged_mr, coords = c("LONGITUDE","LATITUDE"))
- 
 grd_sp <- as_Spatial(locations_sf)
 dt.vgm = variogram(value_mean~1,grd_sp)
 plot(dt.vgm)
@@ -159,11 +168,13 @@ plot(dt.vgm)
 #countryvariogram("DE") 
 countryvariogram("DE", 1) 
 
-countryvariogram("US",1) 
+countryvariogram("US", 1) 
 
 countryvariogram("CN", 1)
  
 #countryvariogram("CN")
+
+
 
 #Moran I test
 #install.packages("ape", dependencies = TRUE)
@@ -176,34 +187,23 @@ countryvariogram("CN", 1)
 #diag(no2.inv) <- 0
 #no2.inv[1:5, 1:5]
 #Moran.I(merged_mrf$value_mean, na.rm = T, no2.inv) 
-#head(merged_mr)
-
-
 ```
 
-
-```{r residual}
-response_predictor= globalLUR::sampledf(merged_mr,fraction = 0.8, country2digit = "CN" ,grepstring_rm = "ID|countryfullname")
-test = response_predictor$test
-training = response_predictor$training
-inde_varexp = response_predictor$inde_var
-  
-inde_var_train = inde_varexp[training,]
-inde_var_test = inde_varexp[test,]
-
-
+spatial correlation of errors of random forest
+```{r residual_correlation}
+set.seed(2)
+pr =  globalLUR::sampledf(merged_mr,fraction = 0.8, country2digit = "CN" ,grepstring_rm = "ID|countryfullname")
+inde_var_train = with(pr, inde_var[training,])
+inde_var_test = with(pr, inde_var[test,])
 pre_mat = subset_grep(inde_var_train, grepstring = "ROAD|pop|value_mean|temp|wind|eleva|coast|I_1|Trop")
 rf = ranger(value_mean~ ., data = pre_mat, mtry = 33, num.trees = 2000,importance = "permutation")
- 
-rf_error = predictions(predict(rf, data =inde_var_test  )) - inde_var_test$value_mean
-rferror_df = data.frame(error = rf_error, LATITUDE = inde_var_test$LATITUDE,LONGITUDE = inde_var_test$LONGITUDE)
-error_sf  = st_as_sf(rferror_df, coords = c("LONGITUDE","LATITUDE"))
- 
-grd_sp <- as_Spatial(error_sf)
-dt.vgm = variogram(error~1,grd_sp,cutoff = 1)
+rf
+errordf = with(inde_var_test, data.frame( error=predictions(predict(rf,inde_var_test)) -value_mean, LONGITUDE = LONGITUDE, LATITUDE = LATITUDE))
+                 
+error_sp = errordf %>% st_as_sf(coords = c("LONGITUDE","LATITUDE")) %>% as_Spatial
+dt.vgm = variogram(error~1,error_sp, cutoff = 1)
 plot(dt.vgm)
 ```
-
 
 ### Data preprocessing:
 0) add variables by ID or by rasters (not in this document). 
@@ -215,30 +215,14 @@ plot(dt.vgm)
 Separate the dataset into training and  test dataset with a fraction (her 80\% of the records are used for training, the rest for testing), "DE" is the two digit for germany. If for world, the sampling uses the fraction per country. 
 ```{r}
 #merged = merge(merged, stat[,-which(names(stat)%in%c("LATITUTE", "LONGITUDE"))], by = "ID", all.x = T)
-
- 
 ```
-
-
-
-
-
 
 
 #### Germany as an example
 ```{r sample}
-
-
-response_predictor= globalLUR::sampledf(merged_mr,fraction = 0.8, country2digit = "DE" ,grepstring_rm = "ID|countryfullname")
-
+response_predictor= globalLUR::sampledf(merged_mr,fraction = 0.8, country2digit = "DE" ,grepstring_rm = "ID|LATITUDE|LONGITUDE|countryfullname")
 ```
 
-
-```{r, eval = F}
-#Differences between day and night values
-plot(with(response_predictor$inde_var,day_value-night_value), typ = "h")
-abline(h=0)
-```
 
 Retrieve test, training, and all variables.  
 ```{r}
@@ -250,7 +234,7 @@ inde_var = inde_var%>%dplyr::select(-country)
 ```
 
 
- 
+The size of test and training dataset
 ```{r size}
 length(test)
 length(training)
@@ -303,60 +287,40 @@ i.e. ROAD|population|value_mean|temperature|wind|GEOM product|OMI|elevation.
 
 Note population is not always significant, though the individual R square for each buffer is high. The prediction for night is much better than for the day
 
-
- 
-
-###### Regression tree and random forest. The prediction is so far the best.  For night the prediction error is much lower. Also indicated in the validation. 
-```{r}
-library(party)
- set.seed(2)
- 
- ctree_LUR(inde_var, y_varname= c("day_value"), training=training, test= test, grepstring ="ROAD|pop|temp|wind|Rsp|OMI|eleva|coast|I_1|Tropo|LON|LAT" )
- 
-```
-
-Creates diverse set of trees because
-1) trees are instable w.r.t. changes in learning/training data (bagging)
-2) randomly preselect mtry splitting variables in each split  
-
+###### Regression tree
 The tree and prediction error will be different if shuffeling training and testing data. 
 ```{r eval = T}
 for (i in 2:5)
 {set.seed(i)
-a= globalLUR::sampledf(merged_mr,fraction = 0.8, "DE" ,grepstring_rm = "ID|countryfullname")
-test = a$test
-training = a$training
-inde_varexp = a$inde_var
-#summary(inde_var)
-ctree_LUR(inde_varexp, y_varname= c("day_value"), training=training, test= test, grepstring ="ROAD|pop|temp|wind|Rsp|OMI|eleva|coast|I_1|Tropomi" )
+testtree = globalLUR::sampledf(merged_mr,fraction = 0.8, "DE" )
+ 
+with (testtree, ctree_LUR(inde_var, y_varname= c("day_value"), training= training, test=  test, grepstring ="ROAD|pop|temp|wind|Rsp|OMI|eleva|coast|I_1|Tropomi" ))
 }
 
 ```
 
 
-Random forest: cforest is much slower than ranger. The prediction error should be similar. 
-```{r}
- set.seed(2)
-rf_LUR(inde_varexp, y_varname= c("day_value"), training=training, mtry = 33, numtrees = 2000, test=test, grepstring ="ROAD|pop|temp|wind|Rsp|OMI|eleva|coast|I_1" )
 
-rf_LUR(inde_varexp, y_varname= c("day_value"), training=training, mtry = 20, numtrees = 2000, test=test, grepstring ="ROAD|pop|temp|wind|Rsp|OMI|eleva|coast|I_1" )
+###### random forest. The prediction is so far the best.  For night the prediction error is much lower. Also indicated in the validation. 
+ AD|pop|temp|wind|Rsp|OMI|eleva|coast|I_1|Tropo" )
+ 
 
-rf_LUR(inde_varexp, y_varname= c("day_value"), training=training, mtry = 20, numtrees = 1000, test=test, grepstring ="ROAD|pop|temp|wind|Rsp|OMI|eleva|coast|I_1" )
-```
+Creates diverse set of trees because
+1) trees are instable w.r.t. changes in learning/training data (bagging)
+2) randomly preselect mtry splitting variables in each split  
 
 
-```{r}
-inde_varexp= inde_var
-inde_var_train = inde_varexp[training,]
-inde_var_test = inde_varexp[test,]
-```
+
+
+
+
 
 model training and parameter tuning
 ```{r}
-library(caret)
+#caret
 names(getModelInfo())
- 
 ```
+
 ```{r}
 inde_var_train= subset_grep(inde_var_train,"ROAD|pop|temp|wind|Rsp|OMI|eleva|coast|I_1|Tropomi|value_mean")
 model_rf= train(value_mean ~ ., data=inde_var_train, method='rf') # mtry
@@ -391,45 +355,27 @@ results <- resamples(models)
 summary(results)
 ```
 
-#### Random forest
-
+#### Important variables and Partial plots: using the "vip" package
  
-Important variables and Partial plots 
 ```{r}
+vip::list_metrics()
 
 pre_mat = subset_grep(inde_var_train, grepstring = "ROAD|pop|value_mean|temp|wind|eleva|coast|I_1|Trop")
 rf = ranger(value_mean~ ., data = pre_mat, mtry = 33, num.trees = 2000,importance = "permutation")
- 
+rf
+# ranger method
 importance(rf)
-#install.packages("vip")
-library(vip)
-list_metrics()
 
+#vip
 DF_P_r2 = vi(rf, method = "permute", target = "value_mean", metric = "r2" ) 
 DF_P_rmse = vi(rf, method = "permute", target = "value_mean", metric = "rmse") 
- 
-#DF = vi(rf, method = "ice", target = "value_mean") 
+
 vip (DF_P_rmse)
+vip (DF_P_r2)
  
-#install.packages("DT")
-#install.packages("sparkline") 
 ```
 
-```{r}
-#rf = ranger(value_mean~ ., data = pre_mat, mtry = 33, num.trees = 2000,importance = "permutation")
-#DF2 = data.frame(var = names(importance(rf)), importance.rf = importance(rf))
-#DF2 =  arrange(DF2, desc(importance.rf)) 
-#DF
-#DF2
-#ggplot(DF2, aes(y=importance.rf, x=var))+ 
-#      geom_bar(stat="identity", position="dodge")+ coord_flip()+
-#      ylab("Variable Importance")+
-#      xlab("")+
-#      ggtitle("Information Value Summary")+
-#      guides(fill=F)+
-#      scale_fill_gradient(low="red", high="blue")
-```
-
+ 
 partial dependence plots: all the variables. (using sparklines takes a while)
 ```{r pdp, eval = F}
 library(DT)
@@ -437,9 +383,7 @@ library(sparkline)
 a=add_sparklines(DF, fit = rf)
 library(htmlwidgets)
 saveWidget(a, file="sparkline.html")
-
-
-
+ 
 ```
 
 
@@ -448,9 +392,7 @@ Partial dependence plot of selected variables
 library(GGally)
 pre_mat_s = inde_var_train%>%select(value_mean, ROAD_2_50, pop3k, ROAD_M345_300) 
 
-
-
-
+ 
 lm_s = lm(value_mean~., data = pre_mat_s)
 
 rf_s = ranger(value_mean~ ., data = pre_mat_s, num.trees = 2000,importance = "permutation")
@@ -462,13 +404,9 @@ correlation
 pre_mat_predictor = pre_mat_s%>%select(-value_mean) 
 ggpairs(pre_mat_predictor)
 ```
+
+
 ```{r}
-
-
-
-library(pdp)
-
- 
 p_lm=partial(lm_s, "ROAD_M345_300",plot = TRUE, rug = TRUE)
 plot(p_lm)
 
@@ -478,8 +416,6 @@ plot(p2)
 ```
 
 ```{r}
-
-
 #slow
 pd <- partial(rf_s, pred.var = c("pop3k", "ROAD_M345_300"  ))
 
@@ -492,10 +428,8 @@ pdp2= plotPartial(pd, contour = TRUE, col.regions = rwb)
  
 # 3-D surface
 #pdp3 <- plotPartial(pd, levelplot = F, zlab = "ROAD_1_50", colorkey = T, 
- #                   screen = list(z = -20, x = -60) )
-
-
-
+#                   screen = list(z = -20, x = -60) )
+ 
 p3= partial(rf_s, "ROAD_2_50",plot = TRUE, rug = TRUE)
 p1 = partial(rf_s, "pop3k",plot = TRUE, rug = TRUE)
 grid.arrange(p1, p2,p3, pd1, pdp2 , ncol = 2)
@@ -507,23 +441,25 @@ grid.arrange(p1, p2,p3, pd1, pdp2 , ncol = 2)
 #### Gradient boosting
 
 ```{r gradientboostingtree}
- 
-library(gbm)
 gbm1 =  gbm(formula = value_mean~., data = pre_mat, distribution = "gaussian", n.trees = 2000,
   interaction.depth = 6, shrinkage = 0.01, bag.fraction = 0.5 )
-
 names(pre_mat)
-plot(gbm1, i.var = 2:3)
-plot(gbm1, i.var = 1)
-#plot(gbm1, i.var = 2)
-#plot(gbm1, i.var = 3)
-
 summary(gbm1)
- 
+
+plot(gbm1, i.var = 2:3)
+plot(gbm1, i.var = 1) 
 #rf_residual <- pre_rf -  rdf_test$NO2
 
 ```
 
+Xgboost
+
+```{r}
+varstring = "ROAD|pop|temp|wind|RSp|OMI|eleva|coast|I_1|Tropo"
+xgboost_LUR(inde_var, max_depth =4, eta =0.02, nthread =2, nrounds = 2000, y_varname= c("day_value"),training=training, test=test, grepstring =varstring )
+ 
+xgboost_imp (variabledf= inde_var, y_varname= "day_value", max_depth =5, eta =0.02, nthread =4, nrounds = 2000, training=training, test=test, grepstring =varstring )
+```
 
 ###### LASSO 
 
@@ -531,11 +467,8 @@ In Sequence, mean, day , night. The predicton errors are much higher than random
 The variables selected are slightly different from each other. The variables selected each time are also different. 
 
 ```{r}
- 
 Lasso(inde_var,vis1 = T, y_varname = "day_value", test,training=training, test=test)
 Lasso(inde_var, vis1 = T,y_varname = "night_value", training=training, test=test)
- 
- 
 ```
 
  
@@ -552,10 +485,8 @@ buffers_out = c(25, 50,100,300,500,800, 1000,3000,5000)
 RDring_coef(inde_var,  quote(day_value),buffers_in = buffers_in,buffers_out = buffers_out, number_roadtypes = 3) 
 ```
 
-additional variable pop1k, 3k, elevation, sequentially  
+additional variable pop1k 
 ```{r}
- 
-
 
 distance_center = (buffers_out-buffers_in)/2 + buffers_in
 
