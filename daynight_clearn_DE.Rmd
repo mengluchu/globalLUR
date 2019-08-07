@@ -5,11 +5,24 @@ knitr::opts_chunk$set(fig.width=12, fig.height=8, fig.path='Figs/',
 
 Load data
 ```{r}
-
+set.seed(2)
 #load("buffer_oq_dense.R")
-load("merged_day_night.Rdata")
-names(merged)
+#stat = read.csv("stat_values/stat_values.csv")
+#nrow(stat)
+#names(stat) =  gsub("R_", "ROAD_", names(stat))
+#names(stat)= gsub("LONG", "LONGITUDE", names(stat))
+#names(stat)= gsub("LAT", "LATITUTE", names(stat))
+#names(stat)= gsub("UID", "ID", names(stat))
+# m1 =read.csv("/Users/Lu000012/Documents/merged.csv")
+ #load( "/Users/Lu000012/Documents/files/GLOBAL_LUR/merged_.Rdata")
+ #merged = merge(merged, stat[,-which(names(stat)%in%c("LATITUTE", "LONGITUDE"))], by = "ID", all.x = T)
+ load("mergedu.Rdata")
+  
+#save(merged, file = "merged.Rdata")
+#merged = merged [ , -which(grepl("ROAD_|Dis", colnames(merged)))]
+
 ```
+
 
 Required packages
 ```{r, include=F}
@@ -20,13 +33,27 @@ ipak <- function(pkg){
     install.packages(new.pkg, dependencies = TRUE, repos='http://cran.muenster.r-project.org')
   sapply(pkg, require, character.only = TRUE)
 }
-packages <- c( "sp","maptools", "MASS" ,"raster", "sf","dplyr", "glmnet","ggplot2" ,"reshape2","lme4" , "tidyr", "RColorBrewer","devtools", "rasterVis","corrplot", "randomForest", "forestFloor","ranger"  )
+packages <- c( "sp","maptools", "MASS" ,"raster", "sf","dplyr", "glmnet","ggplot2" ,"reshape2","lme4" , "tidyr", "RColorBrewer","devtools", "rasterVis","corrplot", "randomForest", "forestFloor","ranger","forecast"  )
 ipak(packages)
+
+```
+
+```{r}
   install_github("mengluchu/globalLUR/globalLUR/globalLUR")
  library(globalLUR)
  ls("package:globalLUR")
 ```
 
+```{r}
+spmerged = st_as_sf(merged, coords = c("LONGITUDE","LATITUDE"))
+ summary(merged)
+library(ggplot2)
+plot(spmerged[ "I_1_300"], breaks = c(2e+3, 2e+4, 2e+5,5e+5, 2e+6 ))
+plot_error(err = log2(na.interp(spmerged$I_1_3000)), geome = spmerged$geometry,plotraster = T)
+plot_error(err = log2(na.interp(spmerged$value_mean)), geome = spmerged$geometry) 
+plot_error(err = log2(na.interp(spmerged$I_1_300)), geome = spmerged$geometry,plotraster = T)
+
+```
 Get 3 color pallets.
 ```{r}
 colorB = brewer.pal(7,"Greens")
@@ -42,10 +69,16 @@ colorS = brewer.pal(11, "Spectral")
  
 
 Separate the dataset into training and  test dataset with a fraction (her 80\% of the records are used for training, the rest for testing), "DE" is the two digit for germany. If for world, the sampling uses the fraction per country. 
+```{r}
+#merged = merge(merged, stat[,-which(names(stat)%in%c("LATITUTE", "LONGITUDE"))], by = "ID", all.x = T)
+
+ 
+```
 
 ```{r}
 a= globalLUR::sampledf(merged,fraction = 0.8, "DE" )
-
+plot(with(a$inde_var,day_value-night_value), typ = "h")
+abline(h=0)
 ```
 
 Retrieve test, training, and all variables.  
@@ -53,6 +86,7 @@ Retrieve test, training, and all variables.
 test = a$test
 training = a$training
 inde_var=a$inde_var
+names(inde_var)
 ```
 
 Merge roads of different road types, the road length of these road types are aggregated. The original road types are substituted (with keep =T, they are remained). 
@@ -150,7 +184,7 @@ plot_rsq(rsqdf = rsqdf, varname = "vars")
 
 The scatter plots between predictors and responses, in sequence mean, day, night
 ```{r scatterplot}
-pre_mat = inde_var_train[,which(grepl("ROAD|pop|value_mean|day_value|night_value|temp|wind|Rsp|OMI|eleva|coast", names(inde_var_train)))]
+pre_mat = inde_var_train[,which(grepl("ROAD|pop|value_mean|day_value|night_value|temp|wind|Rsp|OMI|eleva|coast|I_1", names(inde_var_train)))]
 
 
 scatterplot(pre_mat,"value_mean", "gam")
@@ -189,54 +223,197 @@ Note population is not always significant, though the individual R square for ea
 
 ```
 
+multiple regression with and without OMI 
+```{r}
+pre_mat = inde_var_train[,which(grepl("ROAD|pop|value_mean|temp|wind|eleva|coast|I_1", names(inde_var_train )))]
+lm1 = lm(value_mean~., data = pre_mat)
+summary(lm1)$r.square 
+error_matrix(y_test_mean,prediction = predict(lm1,newdata =xtest_f))
+
+
+pre_mat = inde_var_train[,which(grepl("ROAD|pop|value_mean|temp|wind|eleva|RSp|OMI|coast|I_1", names(inde_var_train )))]
+lm1 = lm(value_mean~., data = pre_mat)
+summary(lm1)$r.square 
+
+error_matrix(y_test_mean,prediction = predict(lm1,newdata =xtest_f))
+ 
+```
+
+Multiple regression, separating day and night 
 ```{r}
  
-pre_mat = inde_var_train[,which(grepl("ROAD|pop|value_mean|temp|wind|Rsp|OMI|eleva|coast", names(inde_var_train )))]
-lm3 = lm(value_mean~., data = pre_mat)
-summary(lm3) 
-
-error_matrix(y_test_mean,prediction = predict(lm3,newdata =xtest_f))
- 
-
-pre_mat = inde_var_train[,which(grepl("ROAD|pop|day_|temp|wind|Rsp|OMI|eleva|coast", names(inde_var_train )))]
-lm3 = lm(day_value~., data = pre_mat)
-summary(lm3) 
-  error_matrix(y_test_day,prediction = predict(lm3,newdata =xtest_f))
 
 
-pre_mat = inde_var_train[,which(grepl("ROAD|pop|night_|temp|wind|Rsp|OMI|eleva|coast", names(inde_var_train )))]
+pre_mat = inde_var_train[,which(grepl("ROAD|pop|day_|temp|wind|eleva|RSp|OMI|coast|I_1", names(inde_var_train )))]
+lm2 = lm(day_value~., data = pre_mat)
+summary(lm2) 
+error_matrix(y_test_day,prediction = predict(lm2,newdata =xtest_f))
+
+
+pre_mat = inde_var_train[,which(grepl("ROAD|pop|night_|temp|wind|eleva|RSp|OMI|coast|I_1", names(inde_var_train )))]
 lm3 = lm(night_value~., data = pre_mat)
 summary(lm3) 
   error_matrix(y_test_night,prediction = predict(lm3,newdata =xtest_f))
-
+ 
 
 ```
 
-###### Randomforest. The prediction is so far the best.  For night the prediction error is much lower. Also indicated in the validation. 
+Testing variable importance: decomposing R square variance
+```{r , eval = F}
+
+
+library("relaimpo", lib.loc="~/R/win-library/3.4")
+
+pre_mat = inde_var_train[,which(grepl("_50|_500|3000|pop|night_|m_1|m_4|m_7|m_11|eleva|OMI|coast", names(inde_var_train )))]
+lm2 = lm(night_value~., data = pre_mat)
+summary(lm2)
+sim =  sort(  calc.relimp(lm2, type =c("pratt"),rela = F)$"pratt",decreasing = T)[1:6]
+s2 = melt(as.data.frame(t(sim)))
+ggplot(s2,aes(x= variable, y =value))+geom_point()
+
+sim =  sort(  calc.relimp(lm3, type =c("pratt"),rela = F)$"pratt",decreasing = T)[1:6]
+s2 = melt(as.data.frame(t(sim)))
+ggplot(s2,aes(x= variable, y =value))+geom_point()
+```
+ 
+
+
+###### Regression tree and random forest. The prediction is so far the best.  For night the prediction error is much lower. Also indicated in the validation. 
+```{r}
+library(party)
+#library(rpart.plot)
+#library(partykit)
+#set.seed(2)
+ 
+#install_github("mengluchu/globalLUR/globalLUR/globalLUR")
+ #library(globalLUR)
+# ls("package:globalLUR")
+
+ ctree_LUR(inde_var, y_varname= c("day_value"), training, test, grepstring ="ROAD|pop|temp|wind|Rsp|OMI|eleva|coast|I_1" )
+
+
+
+#cforest_LUR(inde_var, y_varname= c("day_value"), training, test, grepstring ="ROAD|pop|temp|wind|Rsp|OMI|eleva|coast" ) # takes really long
+#plot(as.simpleparty(a[[2]])) # ctree
+#plot(a[[2]],fitmean = T) #ctree party
+#prp(a[[3]]) # rpart
+#set.seed(2) #randomess of random forest 
+ #rf_LUR(inde_var, y_varname= c("day_value"), training, test,  grepstring ="ROAD|pop|temp|wind|Rsp|OMI|eleva|coast" )
+
+ 
+```
+
+Creates diverse set of trees because
+1) trees are instable w.r.t. changes in learning/training data (bagging)
+2) randomly preselect mtry splitting variables in each split  
+
+The tree and prediction error will be different if shuffeling training and testing data. 
+```{r eval = F}
+for (i in 8:2)
+{set.seed(i)
+a= globalLUR::sampledf(merged,fraction = 0.8, "DE" )
+test = a$test
+training = a$training
+ctree_LUR(inde_var, y_varname= c("day_value"), training, test, grepstring ="ROAD|pop|temp|wind|Rsp|OMI|eleva|coast|I_1" )
+}
+
+```
+
+
+Random forest: cforest is very slow, using ranger. The prediction error should be similar. 
+```{r}
+ 
+rf_LUR(inde_var, y_varname= c("day_value"), training, test, grepstring ="ROAD|pop|temp|wind|Rsp|OMI|eleva|coast|I_1" )
+```
+
+
+
 
 ```{r}
-library(ranger) 
+library(caret)
+pre_mat = inde_var_train[,which(grepl("ROAD|pop|value_mean|temp|wind|eleva|coast|I_1", names(inde_var_train)))]
 
-pre_mat = inde_var_train[,which(grepl("ROAD|pop|value_mean|temp|wind|Rsp|OMI|eleva|coast", names(inde_var_train)))]
-rf3 <- ranger(value_mean~ ., data = pre_mat)
+ tunegrid <- expand.grid(.mtry=c(33:35), .ntree=c(500, 1000, 1500, 2000, 2500))
+
+ CustomRF <- list(type =  c("Classification", "Regression"), library = "ranger", loop = NULL)
+customRF$parameters <- data.frame(parameter = c("mtry", "num.trees"), class = rep("numeric", 2), label = c("mtry", "num.tree"))
+customRF$grid <- function(x, y, len = NULL, search = "grid") {}
+customRF$fit <- function(x, y, wts, param, lev, last, weights, classProbs, ...) {
+  ranger(x, y, mtry = param$mtry, num.trees=param$num.trees, ...)
+}
+customRF$predict <- function(modelFit, newdata, preProc = NULL, submodels = NULL)
+   predict(modelFit, newdata)
+customRF$prob <- function(modelFit, newdata, preProc = NULL, submodels = NULL)
+   predict(modelFit, newdata, type = "prob")
+customRF$sort <- function(x) x[order(x[,1]),]
+customRF$levels <- function(x) x$classes
+control <- trainControl(method="cv", number=10)
+
+tgrid <- expand.grid( .num.trees=c(1000, 1500, 2000, 2500))
+library(care)
+gbmFit1 <- train(value_mean~ ., data = pre_mat,
+                 method = 'xgbTree', 
+                  trControl=control )
+
+gbmFit1
+summary(gbmFit1)
+plot(gbmFit1)
+```
+
+```{r , eval = F}
+ # for testing purpose 
+library(GGally)
+pre_mat = inde_var_train[,which(grepl("ROAD|pop|value_mean|temp|wind|eleva|coast|I_1", names(inde_var_train)))]
+
+pre_mat = select(inde_var_train, ROAD_2_50, pop3k, value_mean, ROAD_M345_300) 
+
+lm2 = lm(value_mean~., data = pre_mat)
+
+pre_mat2 = select(inde_var_train, ROAD_2_50, pop3k, ROAD_M345_300) 
+ggpairs(pre_mat2) 
+
+
+
+
+rf3 <- ranger(value_mean~ ., data = pre_mat, mtry = 33, num.trees = 2000)
 rf3
+library(pdp)
+
+ 
+ 
+p2=partial(rf3, "ROAD_M345_300",plot = TRUE, rug = TRUE)
+ 
+ 
+p3= partial(rf3, "ROAD_2_50",plot = TRUE, rug = TRUE)
+
+
+# from 1d to 3d 
+p1 = partial(rf3, "pop3k",plot = TRUE, rug = TRUE)
+
+
+#slow
+pd <- partial( rf3, pred.var = c("pop3k", "ROAD_M345_300"  ))
+
+# Default PDP
+pd1 = plotPartial(pd)
+
+# Add contour lines and use a different color palette
+rwb <- colorRampPalette(c("red", "white", "blue"))
+pdp2= plotPartial(pd, contour = TRUE, col.regions = rwb)
+ 
+# 3-D surface
+#pdp3 <- plotPartial(pd, levelplot = F, zlab = "ROAD_1_50", colorkey = T, 
+ #                   screen = list(z = -20, x = -60) )
+
+
+# Figure 5
+grid.arrange(p1, p2,p3, pd1, pdp2 , ncol = 2)
+
+
 pre_rf <- predictions(predict(rf3, data =xtest_f ))
 #rf_residual <- pre_rf -  rdf_test$NO2
 error_matrix(y_test_mean, pre_rf) 
-
-pre_mat = inde_var_train[,which(grepl("ROAD|pop|day_|temp|wind|Rsp|OMI|eleva|coast", names(inde_var_train)))]
-rf3 <- ranger(day_value~ ., data = pre_mat)
-rf3
-pre_rf <- predictions(predict(rf3, data =xtest_f ))
-#rf_residual <- pre_rf -  rdf_test$NO2
-error_matrix(y_test_day, pre_rf) 
-
-pre_mat = inde_var_train[,which(grepl("ROAD|pop|night_|temp|wind|Rsp|OMI|eleva|coast", names(inde_var_train)))]
-rf3 <- ranger(night_value~ ., data = pre_mat)
-rf3
-pre_rf <- predictions(predict(rf3, data =xtest_f ))
-#rf_residual <- pre_rf -  rdf_test$NO2
-error_matrix(y_test_night, pre_rf) 
+ 
 
 
 #default = randomForest(y_train~ ., data = pre_mat,ntree=5000,mtry=4,
@@ -248,6 +425,52 @@ error_matrix(y_test_night, pre_rf)
 #           plot(ff,col=Col,plot_GOF = T)
 ```
 
+
+```{r,eval=F}
+
+lmp2=partial(lm2, "ROAD_M345_300",plot = TRUE, rug = TRUE)
+ lmp3= partial(lm2, "ROAD_2_50",plot = TRUE, rug = TRUE)
+lmp1 = partial(lm2, "pop3k",plot = TRUE, rug = TRUE)
+lmpd = partial( lm2, pred.var = c("pop3k", "ROAD_M345_300"  ),plot = TRUE, rug = TRUE)
+par(mfrow = c(2,2))
+ plot(lmp1)
+ plot(lmp2)
+ 
+ plot(lmp3)
+ 
+ plot(lmpd)
+grid.arrange(plot(lmpd), plot(lmp1))
+```
+
+
+```{r gradientboostingtree}
+library(dismo)
+pre_mat = inde_var_train[,which(grepl("ROAD|pop|value_mean|temp|wind|eleva|coast|I_1", names(inde_var_train)))]
+
+pre_mat = select(inde_var_train, ROAD_2_50, pop3k, value_mean, ROAD_M345_300) 
+
+pre_mat2 = select(inde_var_train, ROAD_2_50, pop3k, ROAD_M345_300) 
+ 
+
+#  rf3 <- gbm.step(data=pre_mat, gbm.x=names(pre_mat2),gbm.y = "value_mean", family="gaussian", tree.complexity = 6, learning.rate = 0.01, bag.fraction = 0.5)
+library(gbm)
+rf2 =  gbm(formula = value_mean~., data = pre_mat, distribution = "gaussian",
+     n.trees = 500,
+  interaction.depth = 6,  shrinkage = 0.01,
+  bag.fraction = 0.5 )
+  
+plot(rf2, i.var = 2:3)
+plot(rf2, i.var = 1)
+plot(rf2, i.var = 2)
+plot(rf2, i.var = 3)
+
+summary(rf2)
+ 
+#rf_residual <- pre_rf -  rdf_test$NO2
+
+```
+
+
 ###### LASSO 
 
 In Sequence, mean, day , night. The predicton errors are much higher than random forest, but used a much simpler model 
@@ -255,57 +478,34 @@ The variables selected are slightly different from each other. The variables sel
 
 ```{r}
 
+Lasso(inde_var,vis1 = T, y_varname =  "value_mean",training, test)
+Lasso(inde_var,vis1 = T, y_varname = "day_value",training, test)
+Lasso(inde_var, vis1 = T,y_varname = "night_value",training, test)
  
-Lasso(inde_var, "value_mean",training, test)
-Lasso(inde_var, "day_value",training, test)
-Lasso(inde_var, "night_value",training, test)
  
 ```
 
 
-
-
+##### Mechanical model 
 
  USing the ring of roads. THe road length in each ring could be normalised by the area of the ring (becomes road length density, not done in this model, can choose normalise =T). However, the coefficents of the regression do not increase or decrease with roadrings further away. Looks the 5000m is dominating. If removing this parameter, the 1000m dominates. The coefficients
-
-
-
-```{r ring}
-## use the ring of roads
-
-## question: what are the roads, road0 are all 0
-
-
  
-#rmrows = seq(7,34, by = 7)
-#roadrings = roadrings[,-rmrows]
-
  
-
-#lmroadrings_2 = lm(y_train~., data =data.frame(nor_ring[training,8:14]))
-#summary(lmroadrings_2)
-#plot(coef(lmroadrings_2), typ = "l")
-#lmroadrings_3 = lm(y_train~., data =data.frame(nor_ring[training, 22:28]))
-#summary(lmroadrings_3)
-#plot(coef(lmroadrings_3), typ = "l")
-
-#lmroadrings = lm(y_train~., data =data.frame(nor_ring[training, ]))
-#summary(lmroadrings)
-#plot(coef(lmroadrings), typ = "l")
- 
-```
-
 additional variable pop1k, 3k, elevation, sequentially  
 ```{r}
  
-
-buffers_in = c(0,25,50,100,300,500,1000)
-buffers_out = c(25, 50,100,300,500,1000,5000)
+names(inde_var)
+buffers_in = c(0,25,50,100,300,500,800,1000,3000)
+buffers_out = c(25, 50,100,300,500,800, 1000,3000,5000)
 distance_center = (buffers_out-buffers_in)/2 + buffers_in
 
-mechanical(inde_var,"day_value","pop1k", distance_centre = distance_centre, training, test)
-mechanical(inde_var,"day_value","pop3k", distance_centre = distance_centre, training, test)
-mechanical(inde_var,"day_value","elevation", distance_centre = distance_centre, training, test) 
+mechanical(inde_var,"day_value","pop1k", distance_centre = distance_centre, training=training, test = test, norma = F,buffers_in = buffers_in,buffers_out = buffers_out)
+
+mechanical(inde_var,"night_value","pop1k", distance_centre = distance_centre, training=training, test = test, norma = F,buffers_in = buffers_in,buffers_out = buffers_out)
+
+mechanical(inde_var,"day_value","pop3k", distance_centre = distance_centre, training=training, test = test, norma = F,buffers_in = buffers_in,buffers_out = buffers_out)
+
+mechanical(inde_var,"day_value","I_1_300", distance_centre = distance_centre, training=training, test = test, norma = F,buffers_in = buffers_in,buffers_out = buffers_out) 
 
 
 ```
@@ -313,173 +513,34 @@ coefficients for different road types as a function of road ring for different r
 ```{r}
 
 
-RDring_coef(inde_var,  quote(value_mean)) 
-
-RDring_coef(inde_var,  quote(day_value) )
-RDring_coef(inde_var,  quote(night_value)) 
-
+RDring_coef(inde_var,  quote(value_mean),buffers_in = buffers_in,buffers_out = buffers_out, number_roadtypes = 3) 
+RDring_coef(inde_var,  quote(day_value),buffers_in = buffers_in,buffers_out = buffers_out, number_roadtypes = 3) 
+RDring_coef(inde_var,  quote(night_value),buffers_in = buffers_in,buffers_out = buffers_out, number_roadtypes = 3) 
+ 
 ```
 coefficients for different road types as a function of road ring for different road types, with pop3k as a variable, for day polution
 ```{r}
-RDring_coef(inde_var,  quote(day_value), pop_var = "pop3k") 
+RDring_coef(inde_var,  quote(day_value), pop_var = "pop3k",buffers_in = buffers_in,buffers_out = buffers_out, number_roadtypes = 3) 
+ 
+ 
 ```
 
  
  
 ```{r, eval = F}
 library(nlstools)
- 
- 
 overview(a1)
  
 a1resi= nlsResiduals(a1)
 plot(a1resi)
  
 ```
-
-
-Separating rural and urban points. Fit a model for Rurual points using 5000m buffer, population, and elevation. Then fit a model for urban points using the prediction of the rural model, and road variables excluding 5000m buffer.
-The urban and rurual models are also fit independently for comparison. The rural models include all road variables, elevation and population. 
+ 
 ```{r}
- 
-var_rural= inde_var%>%filter(Dis2>1000&pop1k<3156)
-var_urban= inde_var%>%filter(Dis2<1000|Dis1<500)
-nrow(var_rural)
-nrow(var_urban)
-nrow(inde_var)
-names(inde_var)
-pre_mat_r = var_rural[,which(grepl("5000|elev|pop", names(var_rural)))] #0.4 with the same variable
-pre_mat_u = var_urban[,which(grepl("ROAD|eleva|pop", names(var_urban)))]
-
-trainingR=sample(1:nrow(var_rural),round(nrow(var_rural)*0.8) )
-testR=c(1:nrow(var_rural))[-trainingR]
-
-trainingU=sample(1:nrow(var_urban),round(nrow(var_urban)*0.8))
-testU=c(1:nrow(var_urban))[-trainingU]
-
-y_train_u=var_urban$value_mean[trainingU] 
-
-y_train_r=var_rural$value_mean[trainingR]
-x_train_u = pre_mat_u[trainingU,] 
-x_train_r = pre_mat_r[trainingR,] 
-
-y_test_u=var_urban$value_mean[testU]
- 
-y_test_r=var_rural$value_mean[testR]
-x_test_u = pre_mat_u[testU,] 
-x_test_r = pre_mat_r[testR,] 
-
- lm3 = lm(y_train_u~., data = x_train_u)
-summary(lm3) 
-
-error_matrix(y_test_u,predict(lm3,newdata =x_test_u))
-
- lmR = lm(y_train_r~., data = x_train_r)
-summary(lmR)
- y_pre = predict(lmR, newdata = x_train_u)
-newpre= data.frame(cbind(y_pre,x_train_u[,-which(grepl("5000|elevation|pop", names(x_train_u)))]))
-   lm4 = lm(y_train_u~., data = newpre )
-summary(lm4) 
-
-#y_excl_test = y_test_u - predict(lmR, newdata = x_test_u)
- y_pre = predict(lmR, newdata = x_test_u) 
-test_pre= data.frame(cbind(y_pre,x_test_u ))
-
-error_matrix(y_test_u,predict(lm4,newdata =test_pre))
+library(rpart)
+fit = rpart(value_mean~., data = pre_mat)
+printcp(fit)
+a =  randomForest(iris[,-5], iris[,5], ntree=10)
+plot(a)
 ```
 
-Urban points and roads in random forest
-```{r}
-
-pre_mat_u = x_train_u[,which(grepl("ROAD", names(x_train_u)))]
-rf3 <- ranger(y_train_u~ ., data = pre_mat_u)
-rf3
-pre_rf <- predictions(predict(rf3, data =x_test_u ))
-#rf_residual <- pre_rf -  rdf_test$NO2
-error_matrix(y_test_u, pre_rf)
-
-default = randomForest(y_train_u~ ., data = pre_mat_u,ntree=5000,mtry=4,
-                         keep.inbag = T,keep.forest = T)
-ff = forestFloor(default, X=x_train_u)
- 
-Col = fcol(ff,cols=2)
-           plot(ff,col=Col,plot_GOF = T)
-#           show3d(ff,c(24,19),1,col=Col,plot_GOF = T)
-```
-
-Lasso on urban points
-```{r}
-pre_mat_u = var_urban[,which(grepl("ROAD|pop|temp|wind|Rsp|OMI|eleva|coast", names(var_urban)))]
-pre_mat_u = pre_mat_u[trainingU,] 
-
-cvfit <- glmnet::cv.glmnet(as.matrix(pre_mat_u),y_train_u,type.measure = "mse",standardize=TRUE,alpha = 0.5,lower.limit=0)
-pre_mat_test = x_test_u[,which(grepl("ROAD", names(x_test_u)))]
-  Lassoselected(cvfit)
-```
-
-Urban vs. using all
-```{r, eval = F}
-
-var_urban %>% gather(VAR, predictors, -value_mean ) %>% ggplot(aes(x=predictors, y = value_mean ))+geom_point()  +facet_wrap(~ VAR, scales = "free") +stat_smooth(method = "lm") +
-    theme_bw()
-
-
-var_rural %>% gather(VAR, predictors, -value_mean ) %>% ggplot(aes(x=predictors, y = value_mean ))+geom_point()  +facet_wrap(~ VAR, scales = "free") +stat_smooth(method = "lm") +
-    theme_bw()
-
-inde_var %>% gather(VAR, predictors, -value_mean ) %>% ggplot(aes(x=predictors, y = value_mean ))+geom_point()  +facet_wrap(~ VAR, scales = "free") +stat_smooth(method = "lm") +
-    theme_bw()
-```
-
- 
-
- 
-use urban data only
-```{r, eval=F}
-
-roadsonly_u = x_train_u[, which(grepl("ROAD",
-                                 names(x_train_u)))] # 25 -50000
-
-ringsonly_u = create_ring(roadsonly_u)
-  
-b = paste0("Q",rep(1:5, each = 7))
-formu1 = as.formula(paste("y_train_u~",
-                          paste(names( ringsonly_u)  , "*", b,"*exp( a *", disl  ,")",collapse = "+"), "+d*pop1k", "+c")) 
-
-
-
-
-# form the dataframe 
-disdf = data.frame(mapply(rep,distance_center, each = nrow(ringsonly_u) ))
-names(disdf)= disl
-rdf = cbind(ringsonly_u,disdf, y_train_u=y_train_u ,pop1k = x_train_u$pop1k)           
-#rdf = cbind(rdf, OMI_mean_filt =data.frame(xtrain_f)$OMI  )
-
-# model: y = roadring * exp ( dis * a)             
- 
-
-a1 =  nls(formu1, data = rdf,start = list(a = -0.001,Q1=0.01, Q2 = 0.001,Q3 = 0.0001,Q4 = 0.0001,Q5=0.00001, c = 0.001, d = 0.001))
- 
-summary(a1)
-
-roadrings_test =ringsonly[test,]
-disdf2= data.frame(mapply(rep,distance_center, each = nrow(roadrings_test) ))
-names(disdf2)= disl
-rd2 = cbind(ringsonly[test,] , disdf2,pop1k = xtest_f$pop1k)
- 
-dp = predict(a1,  newdata = rd2)
- 
-error_matrix(y_test,dp )
-coef = coefficients(a1)
- 
-plot(y_test,typ = "line")
-lines(dp , col= "red" )
- 
-plot( distance_center ,coef[2]*exp(distance_center *coef[1]), typ = "l" , main = "coefficients", ylim=c(0,2e-03) ,col = colorG[1])
-lines( distance_center ,coef[3]*exp(distance_center *coef[1]), typ = "l" , main = "coefficients",col = colorG[3])
-lines( distance_center ,coef[4]*exp(distance_center *coef[1]), typ = "l" , main = "coefficients",col = colorG[4])
-lines( distance_center ,coef[5]*exp(distance_center *coef[1]), typ = "l" , main = "coefficients",col = colorG[5])
-lines( distance_center ,coef[6]*exp(distance_center *coef[1]), typ = "l" , main = "coefficients",col = colorG[8])
-legend("topright", c("r1","r2","r3","r4","r5"), lty = 1, col= colorG[c(1,3:5,8)])
-
-```

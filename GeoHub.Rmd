@@ -137,6 +137,8 @@ Plot the paired correlation, for  road predictors, population, Tropomi.  For DE,
 Spatial dependency
 ```{r}
 library(gstat)
+#st_as_sf(merged_mr, coords = c("LONGITUDE","LATITUDE"))
+ 
 grd_sp <- as_Spatial(locations_sf)
 dt.vgm = variogram(value_mean~1,grd_sp)
 plot(dt.vgm)
@@ -154,14 +156,14 @@ grd_sp <- as_Spatial(loca)
 dt.vgm = variogram(value_mean~1,grd_sp, cutoff = cutoff)
 plot(dt.vgm)
 }
-countryvariogram("DE") 
+#countryvariogram("DE") 
 countryvariogram("DE", 1) 
 
-countryvariogram("US") 
+countryvariogram("US",1) 
 
 countryvariogram("CN", 1)
  
-countryvariogram("CN")
+#countryvariogram("CN")
 
 #Moran I test
 #install.packages("ape", dependencies = TRUE)
@@ -179,6 +181,30 @@ countryvariogram("CN")
 
 ```
 
+
+```{r residual}
+response_predictor= globalLUR::sampledf(merged_mr,fraction = 0.8, country2digit = "CN" ,grepstring_rm = "ID|countryfullname")
+test = response_predictor$test
+training = response_predictor$training
+inde_varexp = response_predictor$inde_var
+  
+inde_var_train = inde_varexp[training,]
+inde_var_test = inde_varexp[test,]
+
+
+pre_mat = subset_grep(inde_var_train, grepstring = "ROAD|pop|value_mean|temp|wind|eleva|coast|I_1|Trop")
+rf = ranger(value_mean~ ., data = pre_mat, mtry = 33, num.trees = 2000,importance = "permutation")
+ 
+rf_error = predictions(predict(rf, data =inde_var_test  )) - inde_var_test$value_mean
+rferror_df = data.frame(error = rf_error, LATITUDE = inde_var_test$LATITUDE,LONGITUDE = inde_var_test$LONGITUDE)
+error_sf  = st_as_sf(rferror_df, coords = c("LONGITUDE","LATITUDE"))
+ 
+grd_sp <- as_Spatial(error_sf)
+dt.vgm = variogram(error~1,grd_sp,cutoff = 1)
+plot(dt.vgm)
+```
+
+
 ### Data preprocessing:
 0) add variables by ID or by rasters (not in this document). 
 1) remove unwanted columns or records, 
@@ -194,11 +220,16 @@ Separate the dataset into training and  test dataset with a fraction (her 80\% o
 ```
 
 
+
+
+
+
+
 #### Germany as an example
 ```{r sample}
 
 
-response_predictor= globalLUR::sampledf(merged_mr,fraction = 0.8, country2digit = "DE" ,grepstring_rm = "ID|LATITUDE|LONGITUDE|countryfullname")
+response_predictor= globalLUR::sampledf(merged_mr,fraction = 0.8, country2digit = "DE" ,grepstring_rm = "ID|countryfullname")
 
 ```
 
@@ -280,7 +311,7 @@ Note population is not always significant, though the individual R square for ea
 library(party)
  set.seed(2)
  
- ctree_LUR(inde_var, y_varname= c("day_value"), training=training, test= test, grepstring ="ROAD|pop|temp|wind|Rsp|OMI|eleva|coast|I_1|Tropo" )
+ ctree_LUR(inde_var, y_varname= c("day_value"), training=training, test= test, grepstring ="ROAD|pop|temp|wind|Rsp|OMI|eleva|coast|I_1|Tropo|LON|LAT" )
  
 ```
 
@@ -292,7 +323,7 @@ The tree and prediction error will be different if shuffeling training and testi
 ```{r eval = T}
 for (i in 2:5)
 {set.seed(i)
-a= globalLUR::sampledf(merged_mr,fraction = 0.8, "DE" )
+a= globalLUR::sampledf(merged_mr,fraction = 0.8, "DE" ,grepstring_rm = "ID|countryfullname")
 test = a$test
 training = a$training
 inde_varexp = a$inde_var
@@ -362,14 +393,13 @@ summary(results)
 
 #### Random forest
 
-```{r ranger}
-pre_mat = subset_grep(inde_var_train, grepstring = "ROAD|pop|value_mean|temp|wind|eleva|coast|I_1|Trop")
-rf = ranger(value_mean~ ., data = pre_mat, mtry = 33, num.trees = 2000,importance = "permutation")
-rf
-```
  
 Important variables and Partial plots 
 ```{r}
+
+pre_mat = subset_grep(inde_var_train, grepstring = "ROAD|pop|value_mean|temp|wind|eleva|coast|I_1|Trop")
+rf = ranger(value_mean~ ., data = pre_mat, mtry = 33, num.trees = 2000,importance = "permutation")
+ 
 importance(rf)
 #install.packages("vip")
 library(vip)

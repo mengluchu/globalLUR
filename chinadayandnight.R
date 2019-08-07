@@ -15,7 +15,7 @@ dftime = cbind(time, data.frame(t(df2)))
 
 library(lubridate)
 library(dplyr)
-df1 = dftime%>%mutate(hours  = as.numeric(hour(time)))
+df1 = dftime%>%mutate(hours  = ifelse(as.numeric(hour(time))<16, as.numeric(hour(time))+8, as.numeric(hour(time))-16))
 
  chinaday = df1%>% filter(hours>=7 &hours <= 21)
  chinanight  = df1%>% filter(hours<7 | hours>21)
@@ -52,19 +52,24 @@ qday = read.csv("C:/Users/Lu000012/Documents/files/GLOBAL_LUR/q_day.csv")
 
 wdfnight =  with(qnight, data.frame(latitude, longitude,  value,country))
 wdfday  =  with(qday, data.frame(latitude, longitude,  value,country))
-
+ 
 world_day  = rbind(wdfday, Chinaday)
 world_night  = rbind(wdfnight, Chinanight)
-#write.csv(world_day, file= "world_day.csv")
-#write.csv(world_night, file= "world_night.csv")
-world_day = read.csv("C:/Users/Lu000012/Documents/files/GLOBAL_LUR/world_day.csv")
-world_night = read.csv("C:/Users/Lu000012/Documents/files/GLOBAL_LUR/world_night.csv")
+write.csv(world_day, file= "world_day.csv")
+write.csv(world_night, file= "world_night.csv")
+#world_day = read.csv("C:/Users/Lu000012/Documents/files/GLOBAL_LUR/world_day.csv")
+#world_night = read.csv("C:/Users/Lu000012/Documents/files/GLOBAL_LUR/world_night.csv")
 testoaq = read.csv("C:/Users/Lu000012/Documents/files/GLOBAL_LUR/openaqmorethan1000_ch_locations.csv") # ID with locaitons
+library(sp)
+library(maptools)
 load("C:/Users/Lu000012/Documents/files/GLOBAL_LUR/merged_day_night.Rdata")
+load("C:/Users/Lu000012/Documents/files/GLOBAL_LUR/merged2.Rdata")
+merged = select(merged, -day_value, -night_value)
+ 
 merged  = join_by_id(IDfile= testoaq, coordinatefile=world_day, file2merge = merged, varname="value", newname = "day_value")
 merged  = join_by_id(IDfile= testoaq, coordinatefile=world_night, file2merge = merged , varname="value", newname = "night_value")
-
-
+ 
+load("countrywithppm.R")
 merged  = within(merged, {night_value[country%in% countrywithppm]= night_value[country%in% countrywithppm]*1000*1.91})
 merged  = within(merged, {day_value[country%in% countrywithppm]= day_value[country%in% countrywithppm]*1000*1.91})
 
