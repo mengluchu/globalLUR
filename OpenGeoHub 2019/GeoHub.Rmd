@@ -55,8 +55,14 @@ data("countrywithppm") # countries with ppm (parts per million)
 names(merged)
 ```
 
-Fill missing data with NA. Merge roads of different road types, the road length of these road types are aggregated. The original road types are substituted (with keep =T, they are remained). 
+Number of stations in each country
 
+```{r}
+merged %>% select(country) %>% table
+```
+
+
+Fill missing data with NA. Merge roads of different road types, the road length of these road types are aggregated. The original road types are substituted (with keep =T, they are remained). 
  
 ```{r mergeroads}
 #tag missing data to NA
@@ -129,7 +135,7 @@ print( bp2+ ylim(0, 100))
 
  
  
-Plot the paired correlation, for  road predictors, population, Tropomi.  For DE, CN, and world
+Plot the paired correlation, for road predictors, population, Tropomi.  For DE, CN, and world
  
 ```{r}
  

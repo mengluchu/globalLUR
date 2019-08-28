@@ -7,8 +7,7 @@
 #' @return the road buffers becomes road ring buffers
 #' @export
 
-create_ring = function(inde_var, normalize = F, buffers_in = c(0, 25, 50, 100, 300, 500, 800, 1000, 3000), buffers_out = c(25, 50, 100, 300, 500, 800, 1000, 3000, 5000), number_roadtypes, Road_varname = "ROAD") 
-{
+create_ring = function(inde_var, normalize = F, buffers_in = c(0, 25, 50, 100, 300, 500, 800, 1000, 3000), buffers_out = c(25, 50, 100, 300, 500, 800, 1000, 3000, 5000), number_roadtypes, Road_varname = "ROAD") {
     buffernumber = length(buffers_in)
     roadsonly = subset_grep(inde_var, Road_varname)
     # for5000m = seq(buffernumber, number_roadtypes*buffernumber, by = buffernumber) roadsonly_in = roadsonly roadsonly_in[,for5000m] = 0 # don't need 5000, so let them be 0 and put them in front, for road ring 0.

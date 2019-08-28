@@ -31,11 +31,11 @@ sampledf = function(originaldata, fraction = 0.8, country2digit = NA, grepstring
     training = trainingdf$IDnew
     test = buffer_oq_dense$IDnew[-training]
     inde_var = buffer_oq_dense[, -which(grepl(grepstring_rm, names(buffer_oq_dense)))]
-
+    
     # prex_f = model.matrix(value_mean~., inde_var) # only to get the model matrix
     if (rm_neg_col) {
         rm0 = which(apply(inde_var, 2, max) == 0)
-        if (length(rm0) != 0)
+        if (length(rm0) != 0) 
             inde_var = inde_var[, -rm0]
     }
     return(list(training = training, test = test, inde_var = inde_var))
