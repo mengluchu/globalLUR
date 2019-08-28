@@ -1,0 +1,26 @@
+#### Introduction and refrences
+##### Background
+Air pollution is a major health risk factor: one-third of deaths from stroke, lung cancer and heart disease are due to air pollution. Air pollution estimated at a coarse resolution does not allow personal exposure to be accurately assessed as air pollutants could vary within short distances close to roads. Assessing the health effects of air pollution exposure globally, therefore, requires knowing global surface air pollution continuously in space and time with a high level of details. Land use regression (LUR) models which use supervised step-wise linear regression or more recently shrinkage regression between station measurements and GIS predictors have been the mainstream statistical method to analyze and predict spatial air pollution concentrations. However, the LUR models may fail to capture the complex relationship between air pollutants and GIS predictors, especially at a national or global scale.
+Predicting air pollution globally with high resolution and accuracy for health studies is a nontrivial challenge. Factors are data deficiency, in terms of air pollution measurements and GIS predictors, and the development of a statistical model that can typify the regional or continental differences, such as traffic regulations, energy sources, and local weather. Atmospheric remote sensing measurements and machine learning techniques may provide us with opportunities for this challenge. Machine learning algorithms are flexible but are also known for being subjective to dataset size, causing overfitting, unable to extrapolate, are difficult to be interpreted and evaluated, etc. 
+##### Good to read:
+
+A very good introduction of xgboost:
+https://xgboost.readthedocs.io/en/latest/tutorials/model.html
+
+An important article about global NO2 mapping:
+
+Global Land Use Regression Model for Nitrogen Dioxide Air Pollution
+https://pubs.acs.org/doi/abs/10.1021/acs.est.7b01148
+
+An important remote sensing product of NO2
+Long-Term Trends Worldwide in Ambient NO2 Concentrations Inferred from Satellite Observations.
+https://www.ncbi.nlm.nih.gov/pubmed/26241114
+
+The global challenge of air pollution and epidemiology study:
+Estimates of the Global Burden of Ambient PM 2.5, Ozone, and NO2 on Asthma Incidence and Emergency Room Visits
+
+https://ehp.niehs.nih.gov/doi/10.1289/EHP3766
+
+Book: element of statistical learning
+I found page  610-624 about random forest post-processing particularly interesting! 
+https://web.stanford.edu/~hastie/Papers/ESLII.pdf
