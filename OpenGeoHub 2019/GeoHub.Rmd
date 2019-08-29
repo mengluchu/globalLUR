@@ -316,10 +316,7 @@ Training RF using Caret
 Mtry and number of trees
 ```{r}
 inde_var_train = subset_grep(inde_var[training, ], "ROAD|pop|temp|wind|Rsp|OMI|eleva|coast|I_1|Tropomi|value_mean")
-fit_control <- trainControl(## 10-fold CV
-                           method = "cv",
-                           number = 10)
-model_rf = train(value_mean ~ ., data = inde_var_train, method='rf', trControl = fit_control) # mtry
+model_rf = train(value_mean ~ ., data = inde_var_train, method='rf') # mtry
 plot(model_rf)
 
 fitted <- predict(model_rf, inde_var[test, ])
@@ -335,16 +332,6 @@ plot(model_gbm)
 
 
 
-Tunning XGBoost is more complex (as it has a lot more hyperparameters to tune):
-https://www.analyticsvidhya.com/blog/2016/03/complete-guide-parameter-tuning-xgboost-with-codes-python/
-
-
-1. gamma[default=0][range: (0,Inf)]
-It controls regularization (or prevents overfitting). The optimal value of gamma depends on the data set and other parameter values.
-Higher the value, higher the regularization. Regularization means penalizing large coefficients which don't improve the model's performance. default = 0 means no regularization.
-Tune trick: Start with 0 and check CV error rate. If you see train error >>> test error, bring gamma into action.  
-
-2. lambda and Alpha
 
 
 ```{r ensemble, eval=FALSE}
@@ -383,7 +370,6 @@ DF_P_rmse = vi(rf, method = "permute", target = "value_mean", metric = "rmse")
 
 vip (DF_P_rmse)
 vip (DF_P_r2)
- 
 ```
 
  
@@ -394,7 +380,6 @@ library(sparkline)
 a=add_sparklines(DF, fit = rf)
 library(htmlwidgets)
 saveWidget(a, file="sparkline.html")
- 
 ```
 
 
@@ -402,6 +387,8 @@ Partial dependence plot of selected variables
 ```{r}
 library(GGally)
 pre_mat_s = inde_var_train %>% select(value_mean, ROAD_2_50, pop3k, ROAD_M345_300) 
+
+ 
 lm_s = lm(value_mean~., data = pre_mat_s)
 
 rf_s = ranger(value_mean~ ., data = pre_mat_s, num.trees = 2000, importance = "permutation")
@@ -441,6 +428,7 @@ pdp2 = plotPartial(pd, contour = TRUE, col.regions = rwb)
 p3 = partial(rf_s, "ROAD_2_50", plot = TRUE, rug = TRUE)
 p1 = partial(rf_s, "pop3k", plot = TRUE, rug = TRUE)
 grid.arrange(p1, p2, p3, pd1, pdp2, ncol = 2)
+
 ```
 
  
@@ -448,6 +436,9 @@ grid.arrange(p1, p2, p3, pd1, pdp2, ncol = 2)
 #### Gradient boosting
 
 ```{r gradientboostingtree}
+
+pre_mat = subset_grep(inde_var_train, grepstring = "ROAD|pop|value_mean|temp|wind|eleva|coast|I_1|Trop")
+
 gbm1 =  gbm(formula = value_mean~., data = pre_mat, distribution = "gaussian", n.trees = 2000,
   interaction.depth = 6, shrinkage = 0.01, bag.fraction = 0.5 )
 names(pre_mat)
@@ -456,68 +447,77 @@ summary(gbm1)
 plot(gbm1, i.var = 2:3)
 #plot(gbm1, i.var = 1) 
 #rf_residual <- pre_rf -  rdf_test$NO2
-
 ```
 
 Xgboost
 
-Parameters:
+Tunning XGBoost is more complex (as it has a lot more hyperparameters to tune):
+https://www.analyticsvidhya.com/blog/2016/03/complete-guide-parameter-tuning-xgboost-with-codes-python/
 
-1. nrounds[default=100]
+
+1. gamma[default=0][range: (0,Inf)]
+It controls regularization (or prevents overfitting). The optimal value of gamma depends on the data set and other parameter values.
+Higher the value, higher the regularization. Regularization means penalizing large coefficients which don't improve the model's performance. default = 0 means no regularization.
+Tune trick: Start with 0 and check CV error rate. If you see train error >>> test error, bring gamma into action.  
+
+2. lambda and Alpha
+
+3. nrounds[default=100]
 It controls the maximum number of iterations. For classification, it is similar to the number of trees to grow.
 Should be tuned using CV
 
-2. eta[default=0.3][range: (0,1)]
+4. eta[default=0.3][range: (0,1)]
 It controls the learning rate, i.e., the rate at which our model learns patterns in data. After every round, it shrinks the feature weights to reach the best optimum.
 Lower eta leads to slower computation. It must be supported by increase in nrounds.
 Typically, it lies between 0.01 - 0.3
 
-3. max_depth[default=6][range: (0,Inf)]
+5. max_depth[default=6][range: (0,Inf)]
 It controls the depth of the tree.
 Larger data sets require deep trees to learn the rules from data.
 Should be tuned using CV
 
-4. Gamma
-5. Alpha and Lambda
 ```{r XGBOOST}
   y_varname= "day_value"
   varstring = "ROAD|pop|temp|wind|RSp|OMI|eleva|coast|I_1|Tropo"
   prenres = paste(y_varname, "|", varstring, sep = "")
   sub_mat = subset_grep(inde_var, prenres)
     
-  pre_mat = sub_mat[training, ]
+  x_train = sub_mat[training, ]
   y_train = sub_mat[training, y_varname]
     
   x_test = sub_mat[test, ]
   y_test = sub_mat[test, y_varname]
  
-  df1 = data.table(pre_mat, keep.rownames = F)
+  df_train = data.table(x_train, keep.rownames = F)
+  df_test = data.table(x_test, keep.rownames = F)
   formu = as.formula(paste(y_varname, "~.", sep = ""))
-  dfmatrix = sparse.model.matrix(formu, data = df1)[, -1]
-    
-  params <- list(booster = "gbtree", objective = "binary:logistic", eta=0.3, gamma=0, max_depth=6, min_child_weight=1, subsample=1, colsample_bytree=1)
-  
-  xgb.train (params = params, data = dtrain, nrounds = 79, watchlist = list(val=dtest,train=dtrain), print.every.n = 10, early.stop.round = 10, maximize = F , eval_metric = "error")
+  dfmatrix_train = sparse.model.matrix(formu, data = df_train)[, -1]
+  dfmatrix_test = sparse.model.matrix(formu, data = df_test)[, -1]
+ 
+  train_b = xgb.DMatrix(data = dfmatrix_train, label = y_train) 
+  test_b = xgb.DMatrix(data = dfmatrix_test, label = y_test) 
+  params <- list(booster = "gbtree",max_depth = 4,
+  eta = 0.05,
+  nthread = 2,
+  nrounds = 1000,
+  Gamma = 2)
+  #xgb_t = xgb.train (params = params, data = train_b, nrounds = 500, watchlist = list(val=test_b, train = train_b), print_every_n = 10, early_stopping_rounds = 50, maximize = F , eval_metric = "rmse")
 
   #outputvec = inde_var[training, y_varname]
   max_depth = 4
-  eta = 0.1
-  nthread = 2
+  eta = 0.01
+  nthread = 4
   nrounds = 1000
-  Gamma = 8 
-  bst <- xgboost(data = dfmatrix, label = y_train, max_depth = max_depth, eta = eta, nthread = nthread, nrounds = nrounds, Gamma = Gamma, verbose = 0)
-  tail(bst)
-  x_test%>%select(-day_value)->var_tet  
-  xgbpre = predict(bst, as.matrix(var_tet))
+  Gamma = 2
   
- error_matrix(y_test, xgbpre)
- 
- #sparse array
- df_test = data.table(x_test, keep.rownames = F)
- dfmatrix_test = sparse.model.matrix(formu, data = df_test)[, -1]
- xgbpre = predict(bst, dfmatrix_test)
- error_matrix(y_test, xgbpre)
- 
+  #simplest: tunning of rounds 
+  xgbcv <- xgb.cv( data = train_b, nfold = 10, nround =  nrounds, eta = eta, nthread = nthread, Gamma = Gamma,showsd = T, stratified = T, print_every_n = 200, early_stopping_rounds = 50, maximize = F)
+  xgbcv
+  str(xgbcv)
+  bst <- xgboost(data = train_b, max_depth = max_depth, eta = eta, nthread = nthread, nrounds = xgbcv$best_iteration, Gamma = Gamma, verbose = 1, print_every_n = 200, early_stopping_rounds = 50, maximize = F )
+   
+  xgbpre = predict(bst, test_b)
+  error_matrix(y_test, xgbpre)
 ```
 
 ```{r}
@@ -534,7 +534,7 @@ The variables selected are slightly different from each other. The variables sel
 
 ```{r}
 Lasso(inde_var, vis1 = T, y_varname = "day_value", training = training, test=test)
-Lasso(inde_var, vis1 = T,y_varname = "night_value", training = training, test=test)
+Lasso(inde_var, vis1 = T, y_varname = "night_value", training = training, test=test)
 ```
 
  
