@@ -21,15 +21,17 @@ ipak <- function(pkg){
  
    new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
    if (length(new.pkg)) 
-    install.packages(new.pkg, dependencies = TRUE, repos='http://cran.muenster.r-project.org')
+    install.packages(new.pkg, dependencies = TRUE)
   sapply(pkg, require, character.only = TRUE)
 }
+#repos='http://cran.muenster.r-project.org'
+
 stdata = c("sp", "sf", "raster")
-Stat_methods = c("glmnet", "ranger", "gbm", "xgboost", "party","caret")
-visual = c("RColorBrewer", "ggplot2", "corrplot","tmap", "leaflet", "mapview", "pdp", "vip", "DT", "sparkline")
+Stat_methods = c("glmnet", "ranger", "gbm", "xgboost", "party", "caret", "gstat")
+visual = c("RColorBrewer", "ggplot2", "corrplot", "tmap", "leaflet", "mapview", "pdp", "vip", "DT", "sparkline")
 map = c("maptools")
 tidy = c("devtools", "dplyr",  "tidyr", "reshape2", "knitr")
-other = c("countrycode","htmlwidgets","data.table","Matrix")
+other = c("countrycode", "htmlwidgets", "data.table", "Matrix")
  
 
 packages <- c(stdata, tidy, Stat_methods, visual, map, other)
@@ -37,20 +39,29 @@ ipak(packages)
 
 ```
 
-Auxilary package with data
+
+
+Auxilary package with preprocessed data in dataframe.
+
 ```{r}
 install_github("mengluchu/globalLUR/globalLUR/globalLUR")
 library(globalLUR)
 ls("package:globalLUR")
 ```
 
+If the above is not successeful for MacOS users, the following and a restart of R may be needed 
+```{r, eval = F}
+system('defaults write org.R-project.R force.LANG en_US.UTF-8')
+```
 
-###Preparation
+
+
+#### Preparation
 
 Get 3 color pallets.
 ```{r}
-colorB = brewer.pal(7,"Greens")
-colorG = brewer.pal(11,"PiYG")
+colorB = brewer.pal(7, "Greens")
+colorG = brewer.pal(11, "PiYG")
 colorS = brewer.pal(11, "Spectral")
 ```
 
@@ -79,13 +90,15 @@ summary(merged)
 datatable(merged, rownames = FALSE, filter = "top", options = list(pageLength = 5, scrollX = T))
 ```
 
-Fill missing data with NA. Merge roads of road type 3, 4, 5, the road length of these road types are aggregated. The original road types are substituted (with keep =T, they are remained). 
+Fill missing data with NA
+```{r}
+merged_1 = na_if(merged,-1)
+```
+
+Merge roads of road type 3, 4, 5, the road length of these road types are aggregated. The original road types are substituted (with keep =T, they are remained). 
 
  
 ```{r mergeroads}
-#tag missing data to NA
-merged_1 = na_if(merged,-1)
-#merge roads
 merged_mr = merge_roads(merged_1, c(3, 4, 5), keep = F) # keep = T keeps the original roads. 
 names(merged_mr)
 #numeric country
@@ -98,41 +111,27 @@ names(merged_mr)
 Visualize with tmap: convenient
 ```{r}
 locations_sf = st_as_sf(merged_mr, coords = c("LONGITUDE","LATITUDE"))
- 
- 
-#plot(spmerged["ROAD_1_50"])
-# breaks = c(2e+3, 2e+4, 2e+5,5e+5, 2e+6 )
- 
 osm_valuemean = tm_shape(locations_sf) +
   tm_dots( "value_mean", col = "value_mean", size = 0.05,
      popup.vars = c("value_mean", "day_value", "night_value", "ROAD_2_100", "ROAD_2_5000")) + tm_view(basemaps = c('OpenStreetMap'))
-
 #+tm_shape(lnd)+tm_lines()
-#filename="C:/Users/Lu000012/Documents/files/GLOBAL_LUR/NO2mean.html"
-
 tmap_save(osm_valuemean, "NO2mean.html")
-
 ```
 
 Visualize with leaflet: more control.
 show Day/night ratio, red: day/night >1, blue, day/nigh <1 
 
 ```{r}
-
-
 merged_fp = merged_mr %>% mutate(ratiodn = day_value/night_value) %>% mutate(color = ifelse(ratiodn >1, "red", "blue"))
-
 m  = leaflet(merged_fp) %>%
      addTiles() %>% addCircleMarkers(radius = ~value_mean/5, color = ~color, popup =   ~as.character(value_mean),fill = FALSE) %>% addProviderTiles(providers$Esri.NatGeoWorldMap) %>% addMouseCoordinates() %>%  
 addHomeButton(ext = extent(116.2, 117, 39.7, 40), layer.name = "Beijing") %>% addHomeButton(ext = extent(5, 5.2, 52, 52.2), layer.name = "Utrecht")
-
 saveWidget(m, file = "NO2daynight.html")
 ```
 
 Boxplot
 
 ```{r}
- 
 countryname = paste(merged_mr$country, countrycode(merged_mr$country, 'iso2c', 'country.name'), sep = ":") 
 
 #tag country with ppm 
@@ -156,19 +155,16 @@ print(bp2 + ylim(0, 100))
 Plot the paired correlation, for  road predictors, population, Tropomi.  For DE, CN, and world
  
 ```{r}
-
 merged_mr %>% na.omit %>% filter(country == "DE") %>% dplyr::select(matches("_value|ROAD|pop|Trop")) %>% cor %>% corrplot(type = "upper", method = "pie", tl.cex = 0.7)
     
 merged_mr %>% na.omit %>% filter(country == "CN") %>% dplyr::select(matches("_value|ROAD|pop|Trop")) %>% cor %>% corrplot(type = "upper", method = "pie", tl.cex = 0.7)
        
 merged_mr %>% na.omit %>% dplyr::select(matches("_value|ROAD|pop|Trop")) %>% cor %>% corrplot(type = "upper", method = "pie", tl.cex = 0.7)
-
 ```
 
 
 Spatial dependency
 ```{r}
-library(gstat)
 grd_sp <- as_Spatial(locations_sf)
 dt.vgm = variogram(value_mean~1, grd_sp)
 plot(dt.vgm)
@@ -183,17 +179,11 @@ grd_sp <- as_Spatial(loca)
 dt.vgm = variogram(value_mean~1, grd_sp, cutoff = cutoff)
 plot(dt.vgm)
 }
-#countryvariogram("DE") 
-countryvariogram("DE", 1) 
-
-countryvariogram("US", 1) 
-
+ 
+countryvariogram("DE", 1)
+countryvariogram("US", 1)
 countryvariogram("CN", 1)
  
-#countryvariogram("CN")
-
-
-
 #Moran I test
 #install.packages("ape", dependencies = TRUE)
 #library(ape)
@@ -208,18 +198,19 @@ countryvariogram("CN", 1)
 ```
 
 spatial correlation of errors of random forest
+
 ```{r residual_correlation}
 set.seed(2)
-pr = globalLUR::sampledf(merged_mr,fraction = 0.8, country2digit = "CN" ,grepstring_rm = "ID|countryfullname")
+pr = globalLUR::sampledf(merged_mr, fraction = 0.8, country2digit = "CN", grepstring_rm = "ID|countryfullname")
 inde_var_train = with(pr, inde_var[training, ])
 inde_var_test = with(pr, inde_var[test, ])
 pre_mat = subset_grep(inde_var_train, grepstring = "ROAD|pop|value_mean|temp|wind|eleva|coast|I_1|Trop")
-rf = ranger(value_mean~ ., data = pre_mat, mtry = 33, num.trees = 2000,importance = "permutation")
+rf = ranger(value_mean~ ., data = pre_mat, mtry = 33, num.trees = 2000, importance = "permutation")
 rf
-errordf = with(inde_var_test, data.frame(error = predictions(predict(rf,inde_var_test)) - value_mean, LONGITUDE = LONGITUDE, LATITUDE = LATITUDE))
+errordf = with(inde_var_test, data.frame(error = predictions(predict(rf, inde_var_test)) - value_mean, LONGITUDE = LONGITUDE, LATITUDE = LATITUDE))
                  
 error_sp = errordf %>% st_as_sf(coords = c("LONGITUDE","LATITUDE")) %>% as_Spatial
-dt.vgm = variogram(error~1,error_sp, cutoff = 1)
+dt.vgm = variogram(error~1, error_sp, cutoff = 1)
 plot(dt.vgm)
 ```
 
@@ -228,8 +219,6 @@ plot(dt.vgm)
 1) remove unwanted columns or records, 
 2) select records (e.g. by country), separate testing and training sets.
  
- 
-
 Separate the dataset into training and  test dataset with a fraction (her 80\% of the records are used for training, the rest for testing), "DE" is the two digit for germany. If for world, the sampling uses the fraction per country. 
 ```{r}
 #merged = merge(merged, stat[,-which(names(stat)%in%c("LATITUTE", "LONGITUDE"))], by = "ID", all.x = T)
@@ -237,18 +226,16 @@ Separate the dataset into training and  test dataset with a fraction (her 80\% o
 
 
 #### Germany as an example
+
 ```{r sample}
 response_predictor = globalLUR::sampledf(merged_mr, fraction = 0.8, country2digit = "DE", grepstring_rm = "ID|LATITUDE|LONGITUDE|countryfullname")
-```
 
-
-Retrieve test, training, and all variables.  
-```{r}
+#Retrieve test, training, and all variables.  
+ 
 test = response_predictor$test
 training = response_predictor$training
 inde_var = response_predictor$inde_var
 inde_var = inde_var %>% dplyr::select(-country)
-#summary(inde_var)
 ```
 
 
@@ -260,15 +247,13 @@ length(training)
 
  
 ```{r eval=F }
-#Checkt uni-variant R square. Caculate the r-sq for day, night and mean, and bind the columns to form a dataframe for plotting. 
- 
-rsqmean = univar_rsq(inde_var[,-which(grepl("value_mean|day_|night_",names(inde_var)))],inde_var$value_mean)
+#Checkt uni-variant R square. Caculate the r-sq for day, night and mean, and bind the columns to form a dataframe for plotting.  
+rsqmean =  inde_var %>% dplyr::select(-matches("value_mean|day_|night_")) %>%  univar_rsq (inde_var$value_mean)
 
-rsqday = univar_rsq(inde_var[,-which(grepl("value_mean|day_|night_",names(inde_var)))],inde_var$day_value)
+rsqday = inde_var %>% dplyr::select(-matches("value_mean|day_|night_")) %>%  univar_rsq (inde_var$day_value) 
+rsqnight = inde_var %>% dplyr::select(-matches("value_mean|day_|night_")) %>%  univar_rsq (inde_var$night_value) 
 
-rsqnight = univar_rsq(inde_var[,-which(grepl("value_mean|day_|night_",names(inde_var)))],inde_var$night_value)
-
-rsqdf= cbind(rsqmean,rsqday,rsqnight, rownames(rsqmean))  
+rsqdf = cbind(rsqmean, rsqday, rsqnight, rownames(rsqmean))  
 names(rsqdf)= c("mean","day","night","vars")
 
 plot_rsq(rsqdf = rsqdf, varname = "vars",xlab = "predictors", ylab = "R-squared")
@@ -276,14 +261,13 @@ plot_rsq(rsqdf = rsqdf, varname = "vars",xlab = "predictors", ylab = "R-squared"
 
 The scatter plots between predictors and responses, mean 
 ```{r scatterplot}
-#pre_mat = inde_var_train[,which(grepl("ROAD|pop|value_mean|day_value|night_value|temp|wind|Rsp|OMI|eleva|coast|I_1", names(inde_var_train)))]
-
-
+inde_var %>% dplyr::select(matches("pop1k|Tro|wind_speed_10m_7|temperature_2m_7|day_value")) %>% scatterplot(y_name = "day_value", fittingmethod = "loess")
+inde_var %>% dplyr::select(matches("ROAD_1|day_value")) %>% scatterplot(y_name = "day_value", fittingmethod = "gam")
+inde_var %>% dplyr::select(matches("ROAD_2|day_value")) %>% scatterplot(y_name = "day_value", fittingmethod = "loess")
+inde_var %>% dplyr::select(matches("ROAD_M345|day_value")) %>% scatterplot(y_name = "day_value", fittingmethod = "loess")
+# can choose any variable to look at the scatterplot
+#scatterplot(inde_var, "night_value", "gam")
 #scatterplot(inde_var,"value_mean", "gam" )
-scatterplot(inde_var, "day_value", "gam")
-scatterplot(inde_var, "night_value", "gam")
- 
- 
 ```
 ### Modelling
 1) Tree based
@@ -308,7 +292,6 @@ The tree and prediction error will be different if shuffeling training and testi
 for (i in 2:5)
 {set.seed(i)
 testtree = globalLUR::sampledf(merged_mr,fraction = 0.8, "DE" )
- 
 with (testtree, ctree_LUR(inde_var, y_varname= c("day_value"), training = training, test = test, grepstring ="ROAD|pop|temp|wind|Rsp|OMI|eleva|coast|I_1|Tropomi" ))
 }
 
@@ -328,20 +311,28 @@ model training and parameter tuning
 names(getModelInfo())
 ```
 
+Training RF using Caret
+
+Mtry and number of trees
 ```{r}
-inde_var_train= subset_grep(inde_var_train,"ROAD|pop|temp|wind|Rsp|OMI|eleva|coast|I_1|Tropomi|value_mean")
-model_rf= train(value_mean ~ ., data=inde_var_train, method='rf') # mtry
+inde_var_train = subset_grep(inde_var[training, ], "ROAD|pop|temp|wind|Rsp|OMI|eleva|coast|I_1|Tropomi|value_mean")
+model_rf = train(value_mean ~ ., data = inde_var_train, method='rf') # mtry
 plot(model_rf)
 
-fitted <- predict(model_rf, inde_var_test)
-error_matrix(prediction = fitted, validation = inde_var_test$value_mean)
+fitted <- predict(model_rf, inde_var[test, ])
+error_matrix(prediction = fitted, validation = inde_var[test, ]$value_mean)
 ```
-```{r}
-#model_gbm= train(value_mean ~ ., data=inde_var_train, method='gbm')
-#plot(model_gbm)
-#gbm.step optimal number of trees. 
 
+
+```{r, eval = F}
+model_gbm= train(value_mean ~ ., data = inde_var[training, ], method='gbm')
+plot(model_gbm)
+#gbm.step optimal number of trees. 
 ```
+
+
+
+
 
 ```{r ensemble, eval=FALSE}
 #install.packages("caretEnsemble")
@@ -379,7 +370,6 @@ DF_P_rmse = vi(rf, method = "permute", target = "value_mean", metric = "rmse")
 
 vip (DF_P_rmse)
 vip (DF_P_r2)
- 
 ```
 
  
@@ -390,7 +380,6 @@ library(sparkline)
 a=add_sparklines(DF, fit = rf)
 library(htmlwidgets)
 saveWidget(a, file="sparkline.html")
- 
 ```
 
 
@@ -447,18 +436,45 @@ grid.arrange(p1, p2, p3, pd1, pdp2, ncol = 2)
 #### Gradient boosting
 
 ```{r gradientboostingtree}
+
+pre_mat = subset_grep(inde_var_train, grepstring = "ROAD|pop|value_mean|temp|wind|eleva|coast|I_1|Trop")
+
 gbm1 =  gbm(formula = value_mean~., data = pre_mat, distribution = "gaussian", n.trees = 2000,
   interaction.depth = 6, shrinkage = 0.01, bag.fraction = 0.5 )
 names(pre_mat)
 summary(gbm1)
 
 plot(gbm1, i.var = 2:3)
-plot(gbm1, i.var = 1) 
+#plot(gbm1, i.var = 1) 
 #rf_residual <- pre_rf -  rdf_test$NO2
-
 ```
 
 Xgboost
+
+Tunning XGBoost is more complex (as it has a lot more hyperparameters to tune):
+https://www.analyticsvidhya.com/blog/2016/03/complete-guide-parameter-tuning-xgboost-with-codes-python/
+
+
+1. gamma[default=0][range: (0,Inf)]
+It controls regularization (or prevents overfitting). The optimal value of gamma depends on the data set and other parameter values.
+Higher the value, higher the regularization. Regularization means penalizing large coefficients which don't improve the model's performance. default = 0 means no regularization.
+Tune trick: Start with 0 and check CV error rate. If you see train error >>> test error, bring gamma into action.  
+
+2. lambda and Alpha
+
+3. nrounds[default=100]
+It controls the maximum number of iterations. For classification, it is similar to the number of trees to grow.
+Should be tuned using CV
+
+4. eta[default=0.3][range: (0,1)]
+It controls the learning rate, i.e., the rate at which our model learns patterns in data. After every round, it shrinks the feature weights to reach the best optimum.
+Lower eta leads to slower computation. It must be supported by increase in nrounds.
+Typically, it lies between 0.01 - 0.3
+
+5. max_depth[default=6][range: (0,Inf)]
+It controls the depth of the tree.
+Larger data sets require deep trees to learn the rules from data.
+Should be tuned using CV
 
 ```{r XGBOOST}
   y_varname= "day_value"
@@ -466,32 +482,42 @@ Xgboost
   prenres = paste(y_varname, "|", varstring, sep = "")
   sub_mat = subset_grep(inde_var, prenres)
     
-  pre_mat = sub_mat[training, ]
+  x_train = sub_mat[training, ]
   y_train = sub_mat[training, y_varname]
     
   x_test = sub_mat[test, ]
   y_test = sub_mat[test, y_varname]
  
-  df1 = data.table(pre_mat, keep.rownames = F)
+  df_train = data.table(x_train, keep.rownames = F)
+  df_test = data.table(x_test, keep.rownames = F)
   formu = as.formula(paste(y_varname, "~.", sep = ""))
-  dfmatrix = sparse.model.matrix(formu, data = df1)[, -1]
-    
+  dfmatrix_train = sparse.model.matrix(formu, data = df_train)[, -1]
+  dfmatrix_test = sparse.model.matrix(formu, data = df_test)[, -1]
+ 
+  train_b = xgb.DMatrix(data = dfmatrix_train, label = y_train) 
+  test_b = xgb.DMatrix(data = dfmatrix_test, label = y_test) 
+  params <- list(booster = "gbtree",max_depth = 4,
+  eta = 0.05,
+  nthread = 2,
+  nrounds = 1000,
+  Gamma = 2)
+  #xgb_t = xgb.train (params = params, data = train_b, nrounds = 500, watchlist = list(val=test_b, train = train_b), print_every_n = 10, early_stopping_rounds = 50, maximize = F , eval_metric = "rmse")
+
   #outputvec = inde_var[training, y_varname]
   max_depth = 4
-  eta = 0.1
-  nthread = 2
+  eta = 0.01
+  nthread = 4
   nrounds = 1000
-  bst <- xgboost(data = dfmatrix, label = y_train, max_depth = max_depth, eta = eta, nthread = nthread, nrounds = nrounds, verbose = 0)
-  x_test%>%select(-day_value)->var_tet  
-  xgbpre = predict(bst, as.matrix(var_tet))
- error_matrix(y_test, xgbpre)
- 
- #sparse array
- df_test = data.table(x_test, keep.rownames = F)
- dfmatrix_test = sparse.model.matrix(formu, data = df_test)[, -1]
- xgbpre = predict(bst, dfmatrix_test)
- error_matrix(y_test, xgbpre)
- 
+  Gamma = 2
+  
+  #simplest: tunning of rounds 
+  xgbcv <- xgb.cv( data = train_b, nfold = 10, nround =  nrounds, eta = eta, nthread = nthread, Gamma = Gamma,showsd = T, stratified = T, print_every_n = 200, early_stopping_rounds = 50, maximize = F)
+  xgbcv
+  str(xgbcv)
+  bst <- xgboost(data = train_b, max_depth = max_depth, eta = eta, nthread = nthread, nrounds = xgbcv$best_iteration, Gamma = Gamma, verbose = 1, print_every_n = 200, early_stopping_rounds = 50, maximize = F )
+   
+  xgbpre = predict(bst, test_b)
+  error_matrix(y_test, xgbpre)
 ```
 
 ```{r}
