@@ -1,0 +1,22 @@
+---
+title: "temp1"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(stars)
+library(raster) 
+ 
+system.time(plot(read_stars("/Users/meng/Downloads/globalLUR-master 3/trop_mean_filt.tif")))
+ 
+system.time(plot(raster("/Users/meng/Downloads/globalLUR-master 3/trop_mean_filt.tif")))
+
+plot(read_stars("/Users/meng/Downloads/globalLUR-master 3/OMI_mean_filt.tif"))
+plot(read_stars("/Users/meng/Downloads/globalLUR-master 3/Rsp.tif"))
+ 
+```
+ 
