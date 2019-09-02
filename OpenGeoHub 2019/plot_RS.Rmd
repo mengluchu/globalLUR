@@ -10,12 +10,15 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r}
 library(stars)
 library(raster) 
- 
-system.time(plot(read_stars("/Users/meng/Downloads/globalLUR-master 3/trop_mean_filt.tif")))
- 
-system.time(plot(raster("/Users/meng/Downloads/globalLUR-master 3/trop_mean_filt.tif")))
+trop = read_stars("/Users/meng/Downloads/globalLUR-master 3/trop_mean_filt.tif")
+trop
+system.time(plot(trop))
+trop = raster("/Users/meng/Downloads/globalLUR-master 3/trop_mean_filt.tif")
+trop
+system.time(plot(trop))
 
-plot(read_stars("/Users/meng/Downloads/globalLUR-master 3/OMI_mean_filt.tif"))
+omi = read_stars("/Users/meng/Downloads/globalLUR-master 3/OMI_mean_filt.tif")
+plot(omi)
 plot(read_stars("/Users/meng/Downloads/globalLUR-master 3/Rsp.tif"))
  
 ```
