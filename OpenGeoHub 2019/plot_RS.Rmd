@@ -7,19 +7,24 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+1. trop_mean_filt.tif: mean tropomi column density in $mol*10^2/cm^2$ Feb 2018 to Jan 2019. Data at [ tropomi datahub](https://s5phub.copernicus.eu/dhus/#/home); [earth engine](https://code.earthengine.google.com/?scriptPath=Examples:Datasets/COPERNICUS_S5P_NRTI_L3_NO2#)
+2. OMI_mean_filt: annual mean OMI measured column density in $mol/cm^2$, values out of range are filtered.
+3. Rsp: remote sensing and Chem-GEOS model estimated surface concentration.(http://fizz.phys.dal.ca/~atmos/martin/?page_id=232)
 ```{r}
 library(stars)
 library(raster) 
-trop = read_stars("/Users/meng/Downloads/globalLUR-master 3/trop_mean_filt.tif")
+
+trop = read_stars("Satellite/trop_mean_filt.tif")
 trop
 system.time(plot(trop))
-trop = raster("/Users/meng/Downloads/globalLUR-master 3/trop_mean_filt.tif")
+trop = raster("Satellite/trop_mean_filt.tif")
 trop
 system.time(plot(trop))
 
-omi = read_stars("/Users/meng/Downloads/globalLUR-master 3/OMI_mean_filt.tif")
-plot(omi)
-plot(read_stars("/Users/meng/Downloads/globalLUR-master 3/Rsp.tif"))
+plot(read_stars("Satellite/OMI_mean_filt.tif"))
  
+plot(raster("Satellite/OMI_mean_filt.tif"))
+plot(read_stars("Satellite/Rsp.tif"))
+plot(raster("Satellite/Rsp.tif")) 
 ```
  
