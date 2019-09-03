@@ -1,7 +1,7 @@
 ---
 title: "Opengeohub summer school 2019: Global air pollution modeling."
 author: "Meng Lu, Utrecht University"
-date: "Aug. 7, 2020"
+date: "Sep. 5, 20190"
 output:
   html_document:
     fig_height: 8
@@ -20,10 +20,11 @@ knitr::opts_chunk$set(fig.width=12, fig.height=8, fig.path = 'Figs_geohub/',
                       echo=T, include = T, warning = FALSE, message = FALSE)
 ```
  
-#### The tutorial shows the processes of data exploration and data analysis for the global air pollution modeling project. The statistical learning methods used include random forest, stochastic gradient boosting, extreme gradient boosting, and a mechanical model using nonlinear regression. The partial dependence plot and variable importance are visualised to partly interpretate models.   
+##### This tutorial shows from data exploration to the modelling process for the global air pollution modelling project. The statistical learning methods used include Lasso, random forest, stochastic gradient boosting, extreme gradient boosting. The partial dependence plot and variable importance are visualised to partly interpretate models.   
 
 Required packages
-```{r, include=F}
+
+```{r, include=T}
 ipak <- function(pkg){
  
    new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
@@ -57,6 +58,7 @@ ls("package:globalLUR")
 ```
 
 If the above is not successeful for MacOS users, the following and a restart of R may be needed 
+
 ```{r, eval = F}
 system('defaults write org.R-project.R force.LANG en_US.UTF-8')
 ```
@@ -66,7 +68,7 @@ system('defaults write org.R-project.R force.LANG en_US.UTF-8')
 #### Preparation
 
 Get 3 color pallets.
-```{r}
+```{r, include=T}
 colorB = brewer.pal(7, "Greens")
 colorG = brewer.pal(11, "PiYG")
 colorS = brewer.pal(11, "Spectral")
@@ -91,18 +93,18 @@ value_mean: annual mean NO2, day_value: annual mean NO2 at daytime, night_value:
 ```{r}
 # add data usethis::use_data()
 data("merged")
-names(data)
 data("countrywithppm") # countries with ppm (parts per million)
-summary(merged)
+names(merged)
 datatable(merged, rownames = FALSE, filter = "top", options = list(pageLength = 5, scrollX = T))
 ```
 
 Fill missing data with NA
+
 ```{r}
 merged_1 = na_if(merged, -1)
 ```
 
-Merge roads of road type 3, 4, 5, the road length of these road types are aggregated. The original road types are substituted (with keep =T, they are remained). 
+Merge roads of different road types, here 3, 4, 5, the road length of these road types are aggregated. The original road types are substituted (with keep = T, they are remained). 
 
  
 ```{r mergeroads}
