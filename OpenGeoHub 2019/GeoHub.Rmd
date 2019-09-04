@@ -36,8 +36,8 @@ ipak <- function(pkg){
 #repos='http://cran.muenster.r-project.org'
 
 stdata = c("sp", "sf", "raster")
-Stat_methods = c("glmnet", "ranger", "gbm", "xgboost", "party", "caret", "party", "gstat")
-visual = c("RColorBrewer", "ggplot2", "corrplot", "tmap", "leaflet", "mapview", "pdp", "vip", "DT", "sparkline")
+Stat_methods = c("glmnet", "ranger", "gbm", "xgboost", "party", "caret", "gstat")
+visual = c("RColorBrewer", "ggplot2", "corrplot", "tmap", "leaflet", "mapview","leafem", "pdp", "vip", "DT", "sparkline")
 map = c("maptools")
 tidy = c("devtools", "dplyr",  "tidyr", "reshape2", "knitr")
 other = c("countrycode", "htmlwidgets", "data.table", "Matrix", "GGally")
@@ -87,7 +87,7 @@ Dataset:
 3. night_value: annual mean $NO_2$ ($mg/m^3$) at night time.   
 
 
-1. road_XX_size: road lenght within a buffer with radius "size" of type XX.    
+1. road_XX_size: road lenght within a buffer with radius "size" of type XX. ROAD_1: highway, ROAD_2: primary, ROAD_3: secondary, ROAD_4: tertiary, ROAD_5: unpaved   
 2. I_size: Industrial area within a buffer with radius "size".   
 3. Tropomi_2018: TROPOMI averaged over Feb 2018 - Jan 2019.    
 4. temperature_2m_m: monthly mean temperature at 2m height of month "m".  
@@ -103,7 +103,6 @@ data("merged")
 data("countrywithppm") # countries with ppm (parts per million)
 names(merged)
 merged %>% dplyr::select(value_mean, day_value, night_value) %>% summary()
- 
 #datatable(merged, rownames = FALSE, filter = "top", options = list(pageLength = 5, scrollX = T))
 ```
 
@@ -174,8 +173,7 @@ Plot the paired correlation, for  road predictors, population, Tropomi.  For DE,
  
 ```{r}
 merged_mr %>% na.omit %>% filter(country == "DE") %>% dplyr::select(matches("_value|ROAD|pop|Trop")) %>% cor %>% corrplot(type = "upper", method = "pie", tl.cex = 0.7)
-    
-merged_mr %>% na.omit %>% filter(country == "CN") %>% dplyr::select(matches("_value|ROAD|pop|Trop")) %>% cor %>% corrplot(type = "upper", method = "pie", tl.cex = 0.7)
+
        
 merged_mr %>% na.omit %>% dplyr::select(matches("_value|ROAD|pop|Trop")) %>% cor %>% corrplot(type = "upper", method = "pie", tl.cex = 0.7)
 ```
@@ -184,20 +182,11 @@ merged_mr %>% na.omit %>% dplyr::select(matches("_value|ROAD|pop|Trop")) %>% cor
 Spatial dependency
 ```{r}
 grd_sp <- as_Spatial(locations_sf)
+ 
 dt.vgm = variogram(value_mean~1, grd_sp)
 plot(dt.vgm)
- 
-countryvariogram = function(COUN, cutoff){
-loca =  locations_sf%>%filter(country == COUN)
-grd_sp <- as_Spatial(loca)
 
-dt.vgm = variogram(value_mean~1, grd_sp, cutoff = cutoff)
-plot(dt.vgm)
-}
- 
-countryvariogram("DE", 1)
-countryvariogram("US", 1)
-countryvariogram("CN", 1) # reason?
+
  
 #Moran I test
 #install.packages("ape", dependencies = TRUE)
@@ -212,6 +201,22 @@ countryvariogram("CN", 1) # reason?
 #Moran.I(merged_mrf$value_mean, na.rm = T, no2.inv) 
 ```
 
+
+```{r countryvario}
+countryvariogram = function(COUN, cutoff){
+loca =  locations_sf%>%filter(country == COUN)
+grd_sp <- as_Spatial(loca)
+
+dt.vgm = variogram(value_mean~1, grd_sp, cutoff = cutoff)
+plot(dt.vgm)
+}
+```
+
+```{r}
+countryvariogram("DE", 1)
+countryvariogram("US", 1)
+countryvariogram("CN", 1) # reason?
+```
 
 
 ### Data preprocessing:
@@ -285,14 +290,9 @@ inde_var %>% dplyr::select(matches("ROAD_1_500$|day_value")) %>% scatterplot(y_n
 ```
 
 ### Modelling
-1) Tree based
+1) Tree-based
 2) Lasso
-3) Mechanical model (nls) 
-
-Extra: 
-5) Separate urban/rural hirachical/ two-step linear regression
-6) mixed effects regression 
-
+ 
 ##### LM: linear regression model 
 
 If simply using linear regression, the mean, day, night. Predictors are population, temperature, wind speed, GEOM product, OMI tropo column, elevation, and road buffers. 
@@ -306,7 +306,8 @@ inde_var_train = subset_grep(inde_var[training, ], "ROAD|pop|temp|wind|Rsp|OMI|e
 ```
 
 ###### Regression tree
-The tree and prediction error will be different if shuffeling training and testing data. 
+The tree and prediction error will be different if shuffeling training and testing data.
+
 ```{r eval = F}
 for (i in 2:5)
 {
@@ -340,13 +341,14 @@ inde_var_train = subset_grep(inde_var[training, ], "ROAD|pop|temp|wind|Rsp|OMI|e
 Training RF using Caret
 
 Mtry 
+
 ```{r, eval = F}
 
-model_rf = train(value_mean ~ ., data = inde_var_train, method='rf') # mtry
-plot(model_rf)
+#model_rf = train(value_mean ~ ., data = inde_var_train, method='rf') # mtry
+#plot(model_rf)
 
-fitted <- predict(model_rf, inde_var[test, ])
-error_matrix(prediction = fitted, validation = inde_var[test, ]$value_mean)
+#fitted <- predict(model_rf, inde_var[test, ])
+#error_matrix(prediction = fitted, validation = inde_var[test, ]$value_mean)
 ```
 
 custom a tunning grid for tunning and control the resampling method
@@ -364,32 +366,30 @@ model_rf
 
 try after the work shop as it takes quite a while
 ```{r, eval = F}
-model_gbm = train(value_mean ~ ., data = inde_var[training, ], method='gbm')
-plot(model_gbm)
+#model_gbm = train(value_mean ~ ., data = inde_var[training, ], method='gbm')
+#plot(model_gbm)
 #gbm.step optimal number of trees. 
 ```
-
-
 
 Also computational intensive
 
 ```{r ensemble, eval=FALSE}
 #install.packages("caretEnsemble")
-library(caretEnsemble)
+#library(caretEnsemble)
 
 # Stacking Algorithms - Run multiple algos in one call.
-trainControl <- trainControl(method = "repeatedcv", 
-                             number = 10, 
-                             repeats = 2,
-                             savePredictions = TRUE, 
-                             classProbs = TRUE)
+#trainControl <- trainControl(method = "repeatedcv", 
+#                             number = 10, 
+#                             repeats = 2,
+#                             savePredictions = TRUE, 
+#                             classProbs = TRUE)
 
-algorithmList <- c('rf', 'adaboost', 'earth', 'xgbDART', 'svmRadial')
+#algorithmList <- c('rf', 'adaboost', 'earth', 'xgbDART', 'svmRadial')
 
-set.seed(100)
-models <- caretList(value_mean ~ ., data = inde_var_train, trControl = trainControl, methodList = algorithmList) 
-results <- resamples(models)
-summary(results)
+#set.seed(100)
+#models <- caretList(value_mean ~ ., data = inde_var_train, trControl = trainControl, methodList = algorithmList) 
+#results <- resamples(models)
+#summary(results)
 ```
 
 #### Important variables and Partial plots: using the "vip" package
@@ -536,11 +536,11 @@ Should be tuned using CV
  
   train_b = xgb.DMatrix(data = dfmatrix_train, label = y_train) 
   test_b = xgb.DMatrix(data = dfmatrix_test, label = y_test) 
-  params <- list(booster = "gbtree",max_depth = 4,
-  eta = 0.05,
-  nthread = 2,
-  nrounds = 1000,
-  Gamma = 2)
+  #params <- list(booster = "gbtree",max_depth = 4,
+  #eta = 0.05,
+  #nthread = 2,
+  #nrounds = 1000,
+  #Gamma = 2)
   #xgb_t = xgb.train (params = params, data = train_b, nrounds = 500, watchlist = list(val=test_b, train = train_b), print_every_n = 10, early_stopping_rounds = 50, maximize = F , eval_metric = "rmse")
 
   #outputvec = inde_var[training, y_varname]
