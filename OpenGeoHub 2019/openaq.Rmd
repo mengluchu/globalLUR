@@ -1,0 +1,126 @@
+---
+title: "openairquality"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = F)
+```
+
+```{r}
+ipak <- function(pkg){
+ 
+   new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
+   if (length(new.pkg)) 
+    install.packages(new.pkg, dependencies = TRUE)
+  sapply(pkg, require, character.only = TRUE)
+}
+package = c("ropenaq", "knitr", "xts", "PerformanceAnalytics")
+ipak(package)
+```
+Pollutant variables:
+pm25
+pm10
+no2
+so2
+o3
+co
+bc
+
+time step:
+hourly
+ 
+
+```{r}
+
+countries_table <- aq_countries()
+kable(countries_table)
+
+```
+
+
+
+```{r, eval=F}
+cities_table <- aq_cities()
+kable(head(cities_table))
+
+```
+
+stations in Netherlands
+```{r}
+cities_tableIndia <- aq_cities(country="NL", page = 1)
+kable(cities_tableIndia)
+```
+
+Stations in Utrecht
+```{r}
+locations_chennai <- aq_locations(country = "NL", city = "Utrecht", parameter = "no2")
+kable(locations_chennai)
+```
+
+NO2 measurements of Utrecht, the last week. 
+```{r}
+results_table <- aq_measurements(country = "NL", city = "Utrecht", parameter = "no2" , limit = 20, date_from="2018-05-20", page = 1)
+kable(results_table)
+```
+
+NO2 of the lastes three months 
+
+```{r}
+results_table <- aq_measurements(country = "NL", city = "Utrecht", parameter = "no2"  , date_from="2018-03-1", page = 1)
+U_NO2 = data.frame(results_table)
+table(U_NO2$location)
+
+```
+
+
+
+```{r}
+G_NO2= U_NO2[U_NO2$location=="Utrecht-Griftpark", ]
+NO2 =  xts(G_NO2$value, G_NO2$dateUTC)
+NO2[NO2<0]=NA
+#xts::plot.xts(NO2,plot.type="m", at = "chic") 
+PerformanceAnalytics::chart.TimeSeries(NO2)
+#NO2
+
+```
+
+```{r}
+dit = diff(time(NO2)) 
+plot(time(NO2)[-1], dit , main = "missing data in a time series", ylab = "time interval (hour)",xlab = "")
+length(diff(time(NO2)))
+```
+
+
+Three stations are available from 25- 26, May
+
+```{r}
+results_table <- aq_measurements(country = "NL", city = "Utrecht", parameter = "no2"  , date_from="2018-05-26", page = 1)
+U_NO2 = data.frame(results_table)
+table(U_NO2$location)
+
+```
+
+For, example a time series of a location, queried from 26- 30, May.
+
+```{r, echo = F}
+ 
+
+G_NO2= U_NO2[U_NO2$location=="Utrecht-Griftpark", ]
+NO2 =  xts(G_NO2$value, G_NO2$dateUTC)
+#xts::plot.xts(NO2,plot.type="m", at = "chic") 
+PerformanceAnalytics::chart.TimeSeries(NO2)
+```
+
+
+
+ In October 2017 the API introduced a rate limit of 2,000 requests every 5 minutes. Please keep this in mind. In the case when the request receives a response status of 429 (too many requests), the package will wait 5 minutes.
+
+ 
+Note, since November 2017 the API only provides access to the last
+three months 
+Otherdata via Amazon S3
+(https://medium.com/@openaq/changes-to-the-openaq-api-and-how-to-access-thefull-archive-of-data-3324b136da8c),
+potentially using the aws.s3 package.
+ 
+ https://openaq-data.s3.amazonaws.com/index.html
