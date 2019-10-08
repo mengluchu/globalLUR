@@ -1,22 +1,31 @@
 ---
 title: "Opengeohub summer school 2019: Global air pollution modeling."
 author: "Meng Lu, Utrecht University"
-date: "Aug. 7, 2020"
+date: "Sep. 5, 20190"
 output:
   html_document:
     fig_height: 8
     fig_width: 12
 ---
 
+### outline 
+0. structure
+1. Data: dataset, preprocessing, visualisation,
+2. priminarly examination: paired correlation and spatial correlation, piared R squared, scatterplot
+3. machine learning methods: model parameter tunning, interpretation
+
+
 ```{r global_options, include=FALSE}
 knitr::opts_chunk$set(fig.width=12, fig.height=8, fig.path = 'Figs_geohub/',
                       echo=T, include = T, warning = FALSE, message = FALSE)
+
 ```
  
-#### The tutorial shows the processes of data exploration and data analysis for the global air pollution modeling project. The statistical learning methods used include random forest, stochastic gradient boosting, extreme gradient boosting, and a mechanical model using nonlinear regression. The partial dependence plot and variable importance are visualised to partly interpretate models.   
+##### This tutorial shows from data exploration to the modelling process for the global air pollution modelling project. The statistical learning methods used include Lasso, random forest, stochastic gradient boosting, extreme gradient boosting. The partial dependence plot and variable importance are visualised to partly interpretate models.   
 
 Required packages
-```{r, include=F}
+
+```{r, include=T}
 ipak <- function(pkg){
  
    new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
@@ -28,10 +37,10 @@ ipak <- function(pkg){
 
 stdata = c("sp", "sf", "raster")
 Stat_methods = c("glmnet", "ranger", "gbm", "xgboost", "party", "caret", "gstat")
-visual = c("RColorBrewer", "ggplot2", "corrplot", "tmap", "leaflet", "mapview", "pdp", "vip", "DT", "sparkline")
+visual = c("RColorBrewer", "ggplot2", "corrplot", "tmap", "leaflet", "mapview","leafem", "pdp", "vip", "DT", "sparkline")
 map = c("maptools")
 tidy = c("devtools", "dplyr",  "tidyr", "reshape2", "knitr")
-other = c("countrycode", "htmlwidgets", "data.table", "Matrix")
+other = c("countrycode", "htmlwidgets", "data.table", "Matrix", "GGally")
  
 
 packages <- c(stdata, tidy, Stat_methods, visual, map, other)
@@ -48,9 +57,9 @@ install_github("mengluchu/globalLUR/globalLUR/globalLUR")
 library(globalLUR)
 ls("package:globalLUR")
 ```
- 
 
 If the above is not successeful for MacOS users, the following and a restart of R may be needed 
+
 ```{r, eval = F}
 system('defaults write org.R-project.R force.LANG en_US.UTF-8')
 ```
@@ -60,8 +69,9 @@ system('defaults write org.R-project.R force.LANG en_US.UTF-8')
 #### Preparation
 
 Get 3 color pallets.
-```{r}
+```{r, include=T}
 colorB = brewer.pal(7, "Greens")
+display.brewer.pal(7,"Greens")
 colorG = brewer.pal(11, "PiYG")
 colorS = brewer.pal(11, "Spectral")
 ```
@@ -72,34 +82,37 @@ colorS = brewer.pal(11, "Spectral")
  
 Dataset:
 
-value_mean: annual mean NO2, day_value: annual mean NO2 at daytime, night_value: annual mean NO2 at night time.   
-road_XX_size: road lenght within a buffer with radius "size" of type XX.    
-I_size: Industrial area within a buffer with radius "size".   
-Tropomi_2018: TROPOMI averaged over Feb 2018 - Jan 2019.    
-temperature_2m_m: monthly mean temperature at 2m height of month "m".  
-wind_speed_10m_m:monthly mean wind speed at 2m height of month "m".  
-pop1k/ 3k /5k: population 1, 3, 5 km resolution.  
-Rsp: Surface remote sensing and chemical transport model product.  
-OMI_mean_filt: OMI column density, 2017 annual average.    
+1. value_mean: annual mean $NO_2$ ($mg/m^3$). 
+2. day_value: annual mean $NO_2$ ($mg/m^3$) at daytime. 
+3. night_value: annual mean $NO_2$ ($mg/m^3$) at night time.   
+
+
+1. road_XX_size: road lenght within a buffer with radius "size" of type XX. ROAD_1: highway, ROAD_2: primary, ROAD_3: secondary, ROAD_4: tertiary, ROAD_5: unpaved   
+2. I_size: Industrial area within a buffer with radius "size".   
+3. Tropomi_2018: TROPOMI averaged over Feb 2018 - Jan 2019.    
+4. temperature_2m_m: monthly mean temperature at 2m height of month "m".  
+5. wind_speed_10m_m:monthly mean wind speed at 2m height of month "m".  
+6. pop1k/ 3k /5k: population 1, 3, 5 km resolution.  
+7. Rsp: Surface remote sensing and chemical transport model product.  
+8. OMI_mean_filt: OMI column density, 2017 annual average.    
+
 
 ```{r}
 # add data usethis::use_data()
 data("merged")
-names(data)
-#library(stargazer)
-#stargazer(nu, summary=FALSE)
-#nu = data.frame(table(merged$country))
 data("countrywithppm") # countries with ppm (parts per million)
-summary(merged)
+names(merged)
+merged %>% dplyr::select(value_mean, day_value, night_value) %>% summary()
 #datatable(merged, rownames = FALSE, filter = "top", options = list(pageLength = 5, scrollX = T))
 ```
 
 Fill missing data with NA
+
 ```{r}
-merged_1 = na_if(merged,-1)
+merged_1 = na_if(merged, -1)
 ```
 
-Merge roads of road type 3, 4, 5, the road length of these road types are aggregated. The original road types are substituted (with keep =T, they are remained). 
+Merge roads of different road types, here 3, 4, 5, the road length of these road types are aggregated. The original road types are substituted (with keep = T, they are remained). 
 
  
 ```{r mergeroads}
@@ -126,7 +139,7 @@ Visualize with leaflet: more control.
 show Day/night ratio, red: day/night >1, blue, day/nigh <1 
 
 ```{r}
-merged_fp = merged_mr %>% mutate(ratiodn = day_value/night_value) %>% mutate(color = ifelse(ratiodn >1, "red", "blue"))
+merged_fp = merged_mr %>% mutate(ratiodn = day_value/night_value) %>% mutate(color = ifelse(ratiodn > 1, "red", "blue"))
 m  = leaflet(merged_fp) %>%
      addTiles() %>% addCircleMarkers(radius = ~value_mean/5, color = ~color, popup =   ~as.character(value_mean),fill = FALSE) %>% addProviderTiles(providers$Esri.NatGeoWorldMap) %>% addMouseCoordinates() %>%  
 addHomeButton(ext = extent(116.2, 117, 39.7, 40), layer.name = "Beijing") %>% addHomeButton(ext = extent(5, 5.2, 52, 52.2), layer.name = "Utrecht")
@@ -160,8 +173,7 @@ Plot the paired correlation, for  road predictors, population, Tropomi.  For DE,
  
 ```{r}
 merged_mr %>% na.omit %>% filter(country == "DE") %>% dplyr::select(matches("_value|ROAD|pop|Trop")) %>% cor %>% corrplot(type = "upper", method = "pie", tl.cex = 0.7)
-    
-merged_mr %>% na.omit %>% filter(country == "CN") %>% dplyr::select(matches("_value|ROAD|pop|Trop")) %>% cor %>% corrplot(type = "upper", method = "pie", tl.cex = 0.7)
+
        
 merged_mr %>% na.omit %>% dplyr::select(matches("_value|ROAD|pop|Trop")) %>% cor %>% corrplot(type = "upper", method = "pie", tl.cex = 0.7)
 ```
@@ -170,23 +182,11 @@ merged_mr %>% na.omit %>% dplyr::select(matches("_value|ROAD|pop|Trop")) %>% cor
 Spatial dependency
 ```{r}
 grd_sp <- as_Spatial(locations_sf)
+ 
 dt.vgm = variogram(value_mean~1, grd_sp)
 plot(dt.vgm)
- 
-dt.vgm = variogram(value_mean~1, grd_sp, cutoff = 10)
-plot(dt.vgm)
 
-countryvariogram = function(COUN, cutoff){
-loca =  locations_sf%>%filter(country == COUN)
-grd_sp <- as_Spatial(loca)
 
-dt.vgm = variogram(value_mean~1, grd_sp, cutoff = cutoff)
-plot(dt.vgm)
-}
- 
-countryvariogram("DE", 1)
-countryvariogram("US", 1)
-countryvariogram("CN", 1)
  
 #Moran I test
 #install.packages("ape", dependencies = TRUE)
@@ -201,22 +201,23 @@ countryvariogram("CN", 1)
 #Moran.I(merged_mrf$value_mean, na.rm = T, no2.inv) 
 ```
 
-spatial correlation of errors of random forest
 
-```{r residual_correlation}
-set.seed(2)
-pr = globalLUR::sampledf(merged_mr, fraction = 0.8, country2digit = "CN", grepstring_rm = "ID|countryfullname")
-inde_var_train = with(pr, inde_var[training, ])
-inde_var_test = with(pr, inde_var[test, ])
-pre_mat = subset_grep(inde_var_train, grepstring = "ROAD|pop|value_mean|temp|wind|eleva|coast|I_1|Trop")
-rf = ranger(value_mean~ ., data = pre_mat, mtry = 33, num.trees = 2000, importance = "permutation")
-rf
-errordf = with(inde_var_test, data.frame(error = predictions(predict(rf, inde_var_test)) - value_mean, LONGITUDE = LONGITUDE, LATITUDE = LATITUDE))
-                 
-error_sp = errordf %>% st_as_sf(coords = c("LONGITUDE","LATITUDE")) %>% as_Spatial
-dt.vgm = variogram(error~1, error_sp, cutoff = 1)
+```{r countryvario}
+countryvariogram = function(COUN, cutoff){
+loca =  locations_sf%>%filter(country == COUN)
+grd_sp <- as_Spatial(loca)
+
+dt.vgm = variogram(value_mean~1, grd_sp, cutoff = cutoff)
 plot(dt.vgm)
+}
 ```
+
+```{r}
+countryvariogram("DE", 1)
+countryvariogram("US", 1)
+countryvariogram("CN", 1) # reason?
+```
+
 
 ### Data preprocessing:
 0) add variables by ID or by rasters (not in this document). 
@@ -224,12 +225,13 @@ plot(dt.vgm)
 2) select records (e.g. by country), separate testing and training sets.
  
 Separate the dataset into training and  test dataset with a fraction (her 80\% of the records are used for training, the rest for testing), "DE" is the two digit for germany. If for world, the sampling uses the fraction per country. 
+
 ```{r}
 #merged = merge(merged, stat[,-which(names(stat)%in%c("LATITUTE", "LONGITUDE"))], by = "ID", all.x = T)
 ```
 
 
-#### Germany as an example
+#### National model: Germany as an example
 
 ```{r sample}
 response_predictor = globalLUR::sampledf(merged_mr, fraction = 0.8, country2digit = "DE", grepstring_rm = "ID|LATITUDE|LONGITUDE|countryfullname")
@@ -249,8 +251,9 @@ length(test)
 length(training)
 ```
 
- 
-```{r eval=F }
+The paired correlation between dependent (mean, day, night) and independent variables. 
+How much information does R-squared tell you?
+```{r eval = T }
 #Checkt uni-variant R square. Caculate the r-sq for day, night and mean, and bind the columns to form a dataframe for plotting.  
 rsqmean =  inde_var %>% dplyr::select(-matches("value_mean|day_|night_")) %>%  univar_rsq (inde_var$value_mean)
 
@@ -261,27 +264,35 @@ rsqdf = cbind(rsqmean, rsqday, rsqnight, rownames(rsqmean))
 names(rsqdf)= c("mean","day","night","vars")
 
 plot_rsq(rsqdf = rsqdf, varname = "vars",xlab = "predictors", ylab = "R-squared")
+#How does it compare to the vairable importance estimated from LASSO, RF, SGB, XGB, etc.
+
 ```
+
 
 The scatter plots between predictors and responses, mean 
+loess: moving regression, non-parametric, each smoothed value is given by a weighted linear least squares regression over the span.
+
 ```{r scatterplot}
-inde_var %>% dplyr::select(matches("pop1k|Tro|wind_speed_10m_7|temperature_2m_7|day_value")) %>% scatterplot(y_name = "day_value", fittingmethod = "loess")
-inde_var %>% dplyr::select(matches("ROAD_1|day_value")) %>% scatterplot(y_name = "day_value", fittingmethod = "gam")
-inde_var %>% dplyr::select(matches("ROAD_2|day_value")) %>% scatterplot(y_name = "day_value", fittingmethod = "loess")
-inde_var %>% dplyr::select(matches("ROAD_M345|day_value")) %>% scatterplot(y_name = "day_value", fittingmethod = "loess")
+inde_var %>% dplyr::select(matches("ROAD_M345_3000|pop3k|ROAD_2_50$|temperature_2m_7|day_value")) %>% scatterplot(y_name = "day_value", fittingmethod = "loess")
+
+inde_var %>% dplyr::select(matches("Tro|OMI|Rsp|night_value")) %>% scatterplot(y_name = "night_value", fittingmethod = "loess")
+# why?
+
 # can choose any variable to look at the scatterplot
-#scatterplot(inde_var, "night_value", "gam")
-#scatterplot(inde_var,"value_mean", "gam" )
+
+#inde_var %>% dplyr::select(matches("ROAD_1|day_value")) %>% scatterplot(y_name = "day_value", fittingmethod = "gam")
 ```
+Discussion 1, try different scatterplot and discuss about the findings
+
+```{r}
+inde_var %>% names
+inde_var %>% dplyr::select(matches("ROAD_1_500$|day_value")) %>% scatterplot(y_name = "day_value", fittingmethod = "gam")
+```
+
 ### Modelling
-1) Tree based
+1) Tree-based
 2) Lasso
-3) Mechanical model (nls) 
-
-Extra: 
-5) Separate urban/rural hirachical/ two-step linear regression
-6) mixed effects regression 
-
+ 
 ##### LM: linear regression model 
 
 If simply using linear regression, the mean, day, night. Predictors are population, temperature, wind speed, GEOM product, OMI tropo column, elevation, and road buffers. 
@@ -289,14 +300,20 @@ If simply using linear regression, the mean, day, night. Predictors are populati
 i.e. ROAD|population|value_mean|temperature|wind|GEOM product|OMI|elevation. 
 
 Note population is not always significant, though the individual R square for each buffer is high. The prediction for night is much better than for the day
+```{r lm}
+
+inde_var_train = subset_grep(inde_var[training, ], "ROAD|pop|temp|wind|Rsp|OMI|eleva|coast|I_1|Tropomi|value_mean")
+```
 
 ###### Regression tree
-The tree and prediction error will be different if shuffeling training and testing data. 
-```{r eval = T}
+The tree and prediction error will be different if shuffeling training and testing data.
+
+```{r eval = F}
 for (i in 2:5)
-{set.seed(i)
-testtree = globalLUR::sampledf(merged_mr,fraction = 0.8, "DE" )
-with (testtree, ctree_LUR(inde_var, y_varname= c("day_value"), training = training, test = test, grepstring ="ROAD|pop|temp|wind|Rsp|OMI|eleva|coast|I_1|Tropomi" ))
+{
+  set.seed(i)
+  testtree = globalLUR::sampledf(merged_mr,fraction = 0.8, "DE" )
+  with (testtree, ctree_LUR(inde_var, y_varname= c("day_value"), training = training, test =  test, grepstring ="ROAD|pop|temp|wind|Rsp|OMI|eleva|coast|I_1|Tropomi" ))
 }
 
 ```
@@ -306,7 +323,7 @@ with (testtree, ctree_LUR(inde_var, y_varname= c("day_value"), training = traini
 ###### random forest.
 
 Creates diverse set of trees because
-1) trees are instable w.r.t. changes in learning/training data (bagging)
+1) trees are unstable w.r.t. changes in learning/training data (bagging)
 2) randomly preselect mtry splitting variables in each split  
 
 model training and parameter tuning
@@ -315,55 +332,74 @@ model training and parameter tuning
 names(getModelInfo())
 ```
 
-Training RF using Caret
 
-Mtry and number of trees
+
 ```{r}
 inde_var_train = subset_grep(inde_var[training, ], "ROAD|pop|temp|wind|Rsp|OMI|eleva|coast|I_1|Tropomi|value_mean")
-model_rf = train(value_mean ~ ., data = inde_var_train, method='rf') # mtry
-plot(model_rf)
-
-fitted <- predict(model_rf, inde_var[test, ])
-error_matrix(prediction = fitted, validation = inde_var[test, ]$value_mean)
 ```
 
+Training RF using Caret
+
+Mtry 
 
 ```{r, eval = F}
-model_gbm= train(value_mean ~ ., data = inde_var[training, ], method='gbm')
-plot(model_gbm)
+
+#model_rf = train(value_mean ~ ., data = inde_var_train, method='rf') # mtry
+#plot(model_rf)
+
+#fitted <- predict(model_rf, inde_var[test, ])
+#error_matrix(prediction = fitted, validation = inde_var[test, ]$value_mean)
+```
+
+custom a tunning grid for tunning and control the resampling method
+
+```{r}
+trl <- trainControl(method = "cv", number = 3) # control the resampling method
+ tgrid <- expand.grid(
+  .mtry = 2:4,
+  .splitrule = "variance",
+  .min.node.size = c(10, 20)
+)
+model_rf = train(value_mean ~ ., data = inde_var_train, method='ranger', trControl  = trl, tuneGrid= tgrid)
+model_rf
+```
+
+try after the work shop as it takes quite a while
+```{r, eval = F}
+#model_gbm = train(value_mean ~ ., data = inde_var[training, ], method='gbm')
+#plot(model_gbm)
 #gbm.step optimal number of trees. 
 ```
 
-
-
-
+Also computational intensive
 
 ```{r ensemble, eval=FALSE}
 #install.packages("caretEnsemble")
-library(caretEnsemble)
+#library(caretEnsemble)
 
 # Stacking Algorithms - Run multiple algos in one call.
-trainControl <- trainControl(method = "repeatedcv", 
-                             number = 10, 
-                             repeats = 2,
-                             savePredictions = TRUE, 
-                             classProbs = TRUE)
+#trainControl <- trainControl(method = "repeatedcv", 
+#                             number = 10, 
+#                             repeats = 2,
+#                             savePredictions = TRUE, 
+#                             classProbs = TRUE)
 
-algorithmList <- c('rf', 'adaboost', 'earth', 'xgbDART', 'svmRadial')
+#algorithmList <- c('rf', 'adaboost', 'earth', 'xgbDART', 'svmRadial')
 
-set.seed(100)
-models <- caretList(value_mean ~ ., data = inde_var_train, trControl = trainControl, methodList = algorithmList) 
-results <- resamples(models)
-summary(results)
+#set.seed(100)
+#models <- caretList(value_mean ~ ., data = inde_var_train, trControl = trainControl, methodList = algorithmList) 
+#results <- resamples(models)
+#summary(results)
 ```
 
 #### Important variables and Partial plots: using the "vip" package
  
 ```{r}
+set.seed(2)
 vip::list_metrics()
 
 pre_mat = subset_grep(inde_var_train, grepstring = "ROAD|pop|value_mean|temp|wind|eleva|coast|I_1|Trop")
-rf = ranger(value_mean~ ., data = pre_mat, mtry = 33, num.trees = 2000,importance = "permutation")
+rf = ranger(value_mean~ ., data = pre_mat, mtry = 33, num.trees = 2000, importance = "permutation")
 rf
 # ranger method
 importance(rf)
@@ -372,29 +408,28 @@ importance(rf)
 DF_P_r2 = vi(rf, method = "permute", target = "value_mean", metric = "r2" ) # very clear what method is used and what is the target
 DF_P_rmse = vi(rf, method = "permute", target = "value_mean", metric = "rmse") 
 
-vip (DF_P_rmse)
+
+vip (DF_P_rmse) 
 vip (DF_P_r2)
+with(inde_var, cor(ROAD_M345_3000, ROAD_2_50))
+with(inde_var, cor(ROAD_M345_3000, pop3k))
+
 ```
 
  
-partial dependence plots: all the variables. (using sparklines takes a while)
+partial dependence plots: all the variables. (using sparklines, takes a while)
+
 ```{r pdp, eval = F}
-library(DT)
-library(sparkline)
-a=add_sparklines(DF, fit = rf)
-library(htmlwidgets)
+a=add_sparklines(DF_P_r2, fit = rf)
 saveWidget(a, file="sparkline.html")
 ```
 
 
-Partial dependence plot of selected variables
+Partial dependence plot of selected 
+
 ```{r}
-library(GGally)
 pre_mat_s = inde_var_train %>% select(value_mean, ROAD_2_50, pop3k, ROAD_M345_300) 
-
- 
 lm_s = lm(value_mean~., data = pre_mat_s)
-
 rf_s = ranger(value_mean~ ., data = pre_mat_s, num.trees = 2000, importance = "permutation")
 rf_s
 ```
@@ -414,7 +449,8 @@ p2 = partial(rf_s, "ROAD_M345_300",plot = TRUE, rug = TRUE)
 plot(p2)
 ```
 
-```{r}
+
+```{r, eval=FALSE}
 #slow
 pd <- partial(rf_s, pred.var = c("pop3k", "ROAD_M345_300"  ))
 
@@ -425,10 +461,10 @@ pd1 = plotPartial(pd)
 rwb <- colorRampPalette(c("red", "white", "blue"))
 pdp2 = plotPartial(pd, contour = TRUE, col.regions = rwb)
  
-# 3-D surface
+#3-D surface
 #pdp3 <- plotPartial(pd, levelplot = F, zlab = "ROAD_1_50", colorkey = T, 
 #                   screen = list(z = -20, x = -60) )
- 
+
 p3 = partial(rf_s, "ROAD_2_50", plot = TRUE, rug = TRUE)
 p1 = partial(rf_s, "pop3k", plot = TRUE, rug = TRUE)
 grid.arrange(p1, p2, p3, pd1, pdp2, ncol = 2)
@@ -500,11 +536,11 @@ Should be tuned using CV
  
   train_b = xgb.DMatrix(data = dfmatrix_train, label = y_train) 
   test_b = xgb.DMatrix(data = dfmatrix_test, label = y_test) 
-  params <- list(booster = "gbtree",max_depth = 4,
-  eta = 0.05,
-  nthread = 2,
-  nrounds = 1000,
-  Gamma = 2)
+  #params <- list(booster = "gbtree",max_depth = 4,
+  #eta = 0.05,
+  #nthread = 2,
+  #nrounds = 1000,
+  #Gamma = 2)
   #xgb_t = xgb.train (params = params, data = train_b, nrounds = 500, watchlist = list(val=test_b, train = train_b), print_every_n = 10, early_stopping_rounds = 50, maximize = F , eval_metric = "rmse")
 
   #outputvec = inde_var[training, y_varname]
@@ -531,60 +567,29 @@ xgboost_LUR(inde_var, max_depth =4, eta =0.02, nthread = 2, nrounds = 2000, y_va
 #xgboost_imp (variabledf = inde_var, y_varname = "day_value", max_depth = 5, eta = 0.02, nthread = 4, nrounds = 2000, training = training, test = test, grepstring = varstring )
 ```
 
+spatial correlation of errors of random forest
+
+```{r residual_correlation}
+set.seed(2)
+pr = globalLUR::sampledf(merged_mr, fraction = 0.8, country2digit = "CN", grepstring_rm = "ID|countryfullname")
+inde_var_train = with(pr, inde_var[training, ])
+inde_var_test = with(pr, inde_var[test, ])
+pre_mat = subset_grep(inde_var_train, grepstring = "ROAD|pop|value_mean|temp|wind|eleva|coast|I_1|Trop")
+rf = ranger(value_mean~ ., data = pre_mat, mtry = 33, num.trees = 2000, importance = "permutation")
+rf
+errordf = with(inde_var_test, data.frame(error = predictions(predict(rf, inde_var_test)) - value_mean, LONGITUDE = LONGITUDE, LATITUDE = LATITUDE))
+                 
+error_sp = errordf %>% st_as_sf(coords = c("LONGITUDE","LATITUDE")) %>% as_Spatial
+dt.vgm = variogram(error~1, error_sp, cutoff = 1)
+plot(dt.vgm)
+```
+
 ###### LASSO 
 
-In Sequence, mean, day , night. The predicton errors are much higher than random forest, but used a much simpler model 
-The variables selected are slightly different from each other. The variables selected each time are also different. 
 
 ```{r}
 Lasso(inde_var, vis1 = T, y_varname = "day_value", training = training, test=test)
 Lasso(inde_var, vis1 = T, y_varname = "night_value", training = training, test=test)
-```
-
- 
-##### Mechanical model 
-
- USing the ring of roads. THe road length in each ring could be normalised by the area of the ring (becomes road length density, not done in this model, can choose normalise =T). However, the coefficents of the regression do not increase or decrease with roadrings further away. Looks the 5000m is dominating. If removing this parameter, the 1000m dominates. The coefficients
- 
- 
-coefficients for different road types as a function of road ring for different road types
-```{r}
-names(inde_var)
-buffers_in = c(0, 25, 50, 100, 300, 500, 800, 1000, 3000)
-buffers_out = c(25, 50, 100, 300, 500, 800, 1000, 3000, 5000)
-RDring_coef(inde_var, quote(day_value), buffers_in = buffers_in,buffers_out = buffers_out, number_roadtypes = 3) 
-```
-
-additional variable pop1k 
-```{r}
-distance_center = (buffers_out-buffers_in)/2 + buffers_in
-mechanical(inde_var,"day_value","pop1k", distance_centre = distance_centre, training = training, test = test, norma = F,buffers_in = buffers_in,buffers_out = buffers_out)
-```
-
-
-
- 
-
-```{r eval=FALSE}
-install.packages("sperrorest")
-library(sperrorest)
-CN_df = merged_mr %>% filter(country == "CN")%>%dplyr::select(-day_value, -value_mean, -ID, -country)
-names(CN_df)
-
-mypred_part <- function(object, newdata) predictions(predict(object, newdata)) 
-f1 =  value_mean ~ ROAD_M345_300 + pop1k + ROAD_2_1000  
-CN_sptest= sperrorest(formula =f1, 
-                      data = CN_df, 
-                      model_fun = ranger,
-                      coords = c("LONGITUDE", "LATITUDE"),
-                      model_args = list( num.trees = 2000),
-                      pred_fun = mypred_part,
-                      progress = TRUE, 
-                      smp_args = list(repetition = 1 , nfold =10))
-
-resamp <- partition_factor_cv(CN_df, nfold = 5, repetition = 1:1,coords = c("LONGITUDE", "LATITUDE"), fac = "Tropomi_2018")
-plot(resamp,CN_df,coords = c("LONGITUDE", "LATITUDE"))
-plot(resamp, maipo, coords = c("utmx","utmy")
 ```
 
  
