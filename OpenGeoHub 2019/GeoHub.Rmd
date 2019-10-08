@@ -48,6 +48,7 @@ install_github("mengluchu/globalLUR/globalLUR/globalLUR")
 library(globalLUR)
 ls("package:globalLUR")
 ```
+ 
 
 If the above is not successeful for MacOS users, the following and a restart of R may be needed 
 ```{r, eval = F}
@@ -85,9 +86,12 @@ OMI_mean_filt: OMI column density, 2017 annual average.
 # add data usethis::use_data()
 data("merged")
 names(data)
+#library(stargazer)
+#stargazer(nu, summary=FALSE)
+#nu = data.frame(table(merged$country))
 data("countrywithppm") # countries with ppm (parts per million)
 summary(merged)
-datatable(merged, rownames = FALSE, filter = "top", options = list(pageLength = 5, scrollX = T))
+#datatable(merged, rownames = FALSE, filter = "top", options = list(pageLength = 5, scrollX = T))
 ```
 
 Fill missing data with NA
