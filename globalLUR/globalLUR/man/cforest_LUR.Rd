@@ -17,7 +17,7 @@ cforest_LUR(variabledf, vis1 = T, y_varname = c("day_value",
 
 \item{test}{the index for the rows used for testing.}
 
-\item{grepstring}{the variable/column names of predictors in Lasso, grepl stlye, e.g. "ROAD|pop|temp|wind|Rsp|OMI|eleva|coast"}
+\item{grepstring}{the variable/column names of predictors in Lasso, grepl stlye, e.g. 'ROAD|pop|temp|wind|Rsp|OMI|eleva|coast'}
 }
 \value{
 plot variable importance and an error matrix

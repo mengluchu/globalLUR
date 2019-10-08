@@ -4,7 +4,7 @@
 \alias{Brt_LUR}
 \title{Boost regression trees for LUR (using b)}
 \usage{
-Brt_LUR(variabledf, opti = F, vis1 = T, ntree = 500,
+Brt_LUR(variabledf, opti = F, vis1 = T, ntree = 1000,
   y_varname = c("day_value", "night_value", "value_mean"), training,
   test, grepstring = "ROAD|pop|temp|wind|Rsp|OMI|eleva|coast", ...)
 }
@@ -17,7 +17,7 @@ Brt_LUR(variabledf, opti = F, vis1 = T, ntree = 500,
 
 \item{test}{the index for the rows used for testing.}
 
-\item{grepstring}{the variable/column names of predictors in Lasso, grepl stlye, e.g. "ROAD|pop|temp|wind|Rsp|OMI|eleva|coast"}
+\item{grepstring}{the variable/column names of predictors in Lasso, grepl stlye, e.g. 'ROAD|pop|temp|wind|Rsp|OMI|eleva|coast'}
 }
 \value{
 plot variable importance and an error matrix

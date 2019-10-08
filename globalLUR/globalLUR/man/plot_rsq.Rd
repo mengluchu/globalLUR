@@ -5,7 +5,7 @@
 \title{Plot R sqaure with each predictor.}
 \usage{
 plot_rsq(predictor_matrix = NA, response = NA, rsqdf = NA,
-  varname = NA)
+  varname = NA, xlab = NA, ylab = NA)
 }
 \arguments{
 \item{predictor_matrix}{a dataframe of predictors}

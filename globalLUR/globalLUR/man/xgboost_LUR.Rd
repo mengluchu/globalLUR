@@ -4,9 +4,9 @@
 \alias{xgboost_LUR}
 \title{xgBoost regression trees for LUR}
 \usage{
-xgboost_LUR(variabledf, opti = F, vis1 = T, max_depth = 4, eta = 1,
-  nthread = 2, nrounds = 10, y_varname = c("day_value",
-  "night_value", "value_mean"), training, test,
+xgboost_LUR(variabledf, max_depth = 4, eta = 0.02, nthread = 2,
+  nrounds = 300, y_varname = c("day_value", "night_value",
+  "value_mean"), training, test,
   grepstring = "ROAD|pop|temp|wind|Rsp|OMI|eleva|coast", ...)
 }
 \arguments{
@@ -18,7 +18,7 @@ xgboost_LUR(variabledf, opti = F, vis1 = T, max_depth = 4, eta = 1,
 
 \item{test}{the index for the rows used for testing.}
 
-\item{grepstring}{the variable/column names of predictors in Lasso, grepl stlye, e.g. "ROAD|pop|temp|wind|Rsp|OMI|eleva|coast"}
+\item{grepstring}{the variable/column names of predictors in Lasso, grepl stlye, e.g. 'ROAD|pop|temp|wind|Rsp|OMI|eleva|coast'}
 }
 \value{
 plot variable importance and an error matrix

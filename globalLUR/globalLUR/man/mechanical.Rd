@@ -15,7 +15,7 @@ mechanical(variabledf, y_var = c("day_value", "night_value",
 \item{y_var}{name of the dependent variable.}
 
 \item{pop_var}{the name of an additional variable as a linear term,  usually population withn a buffer, a string.
-@param Road_varname the name of variables contains road buffers, e.g. "ROAD"}
+@param Road_varname the name of variables contains road buffers, e.g. 'ROAD'}
 
 \item{distance_centre}{the distance to centre from each buffer.  (b2-b1)/2 + b1}
 

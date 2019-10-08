@@ -15,7 +15,7 @@ ctree_LUR(variabledf, vis1 = T, y_varname = c("day_value",
 
 \item{training}{the index for the rows used for training.}
 
-\item{grepstring}{the variable/column names of predictors in Lasso, grepl stlye, e.g. "ROAD|pop|temp|wind|Rsp|OMI|eleva|coast"}
+\item{grepstring}{the variable/column names of predictors in Lasso, grepl stlye, e.g. 'ROAD|pop|temp|wind|Rsp|OMI|eleva|coast'}
 }
 \value{
 plot the tree and return the ctree object

@@ -13,7 +13,7 @@ RDring_coef(variabledf, y_var, Road_varname = "ROAD",
 
 \item{y_var}{the quote of dependent variable name (e.g. quote (value_mean))}
 
-\item{Road_varname}{the name of variables contains road buffers, e.g. "ROAD"}
+\item{Road_varname}{the name of variables contains road buffers, e.g. 'ROAD'}
 
 \item{number_roadtypes}{number of roadtypes, by default 3}
 
@@ -21,7 +21,7 @@ RDring_coef(variabledf, y_var, Road_varname = "ROAD",
 
 \item{buffers_out}{buffers of the outer ring}
 
-\item{pop_var}{other variables added to linear regression, in a list or vector if multiple. e.g. popvar = c("pop3k", "RSp", "elevation")}
+\item{pop_var}{other variables added to linear regression, in a list or vector if multiple. e.g. popvar = c('pop3k', 'RSp', 'elevation')}
 }
 \description{
 Plot coefficients of roadrings of fitting a linear regression model.

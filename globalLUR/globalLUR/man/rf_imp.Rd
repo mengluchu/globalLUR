@@ -4,9 +4,9 @@
 \alias{rf_imp}
 \title{return variable importance, RF}
 \usage{
-rf_imp(variabledf, y_varname = c("day_value", "night_value",
-  "value_mean"), training, test,
-  grepstring = "ROAD|pop|temp|wind|Rsp|OMI|eleva|coast", ...)
+rf_imp(variabledf, numtrees = 2000, mtry = 33,
+  y_varname = c("day_value", "night_value", "value_mean"), training,
+  test, grepstring = "ROAD|pop|temp|wind|Rsp|OMI|eleva|coast", ...)
 }
 \description{
 return variable importance, RF

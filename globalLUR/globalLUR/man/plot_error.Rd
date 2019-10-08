@@ -13,7 +13,7 @@ plot_error(validation = 0, prediction = 0, geome, err = NA,
 
 \item{geome}{geometry of an sf}
 
-\item{err}{The error vector, if provided, the "validataion" and "prediction" are not needed.}
+\item{err}{The error vector, if provided, the 'validataion' and 'prediction' are not needed.}
 
 \item{extremequantil_low}{the low quantile to filter out for better visualization}
 

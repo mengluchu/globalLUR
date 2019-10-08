@@ -11,7 +11,7 @@ scatterplot(variabledf, y_name, fittingmethod = "lm")
 
 \item{y_name}{charater, the name of the dependent variable}
 
-\item{fittingmethod}{the method to fit a line, choosing from the "stat_smooth" in gglot2, can also be  lm, glm, gam, loess.}
+\item{fittingmethod}{the method to fit a line, choosing from the 'stat_smooth' in gglot2, can also be  lm, glm, gam, loess.}
 }
 \description{
 Plot scatterplot between the dependent variables and all the predictors

@@ -6,7 +6,7 @@
 \usage{
 sampledf(originaldata, fraction = 0.8, country2digit = NA,
   grepstring_rm = "ID|LATITUDE|LONGITUDE|ROAD_0|geometry|countryfullname",
-  rm_neg_col = T)
+  rm_neg_col = F)
 }
 \arguments{
 \item{originaldata}{original dataframe}
@@ -15,12 +15,12 @@ sampledf(originaldata, fraction = 0.8, country2digit = NA,
 
 \item{country2digit}{country code, 2 digit, if NA or not in the database, the world is returned, the sampling is equal fraction per country}
 
-\item{grepstring_rm}{the variables that are to be removed, grepl style, e.g. "ID|LATITUDE|LONGITUDE|ROAD_0|geometry|countryfullname"}
+\item{grepstring_rm}{the variables that are to be removed, grepl style, e.g. 'ID|LATITUDE|LONGITUDE|ROAD_0|geometry|countryfullname'}
 
-\item{rm_neg_col}{if True, which is the default, the columens and columes containing all negative values or 0s are removed}
+\item{rm_neg_col}{if True, the columes containing all negative values or 0s are removed}
 }
 \value{
-inde_var the matrix containing response and predictors.
+inde_var the matrix containing response and predictors. Default is false.
 }
 \description{
 devide the data into test and training set, and prepare the dataframe for modeling
@@ -29,7 +29,7 @@ devide the data into test and training set, and prepare the dataframe for modeli
 NA values are removed. This function is used for preprocessing, can be improved.
 }
 \examples{
-a = sampledf(merged, fraction = 0.8, "ES")
+a = sampledf(merged, fraction = 0.8, 'ES')
 test = a$test
 training = a$training
 inde_var = a$indevar

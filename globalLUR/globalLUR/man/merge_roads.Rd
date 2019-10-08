@@ -7,7 +7,7 @@
 merge_roads(inde_var, classvec, keep = F)
 }
 \arguments{
-\item{inde_var}{a dataframe with ROAD variables named "ROAD", 5 types of roads, now is not a generic function, need the data to be formated in a way}
+\item{inde_var}{a dataframe with ROAD variables named 'ROAD', 5 types of roads, now is not a generic function, need the data to be formated in a way}
 
 \item{classvec}{the vectors of road types to merge, e.g. c(1,2,3) merges road type 1,2,3.}
 

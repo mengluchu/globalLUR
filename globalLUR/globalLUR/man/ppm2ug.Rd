@@ -11,11 +11,10 @@ ppm2ug(ppm)
 }
 \value{
 air pollutant in ug/m3
-library(countrycode)
-load("C://Users//lu000012//Documents/files/GLOBAL_LUR//countrywithppm.R")
-load("merged")
-merged$value_mean = ifelse(merged$country%in%countrywithppm,ppm2ug(merged$value_mean), merged$value_mean )
 }
 \description{
 convert ppm to ug/m3
+}
+\details{
+ug/m3 = ppm * 1000 * 1.91
 }
