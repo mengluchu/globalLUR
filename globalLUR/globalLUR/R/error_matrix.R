@@ -43,5 +43,5 @@ error_matrix = function(validation, prediction) {
     rIQR1 = rIQR(validation, prediction)
 
     rsqd1 = Rsquare(validation, prediction)
-    c(RMSE = rmse1, RRMSE = rrmse1, IQR = IQR1, rIQR = rIQR1, MAE=MAE1, rMAE = rMAE1, Rsqd = rsqd1)
+    c(RMSE = rmse1, RRMSE = rrmse1, IQR = IQR1, rIQR = rIQR1, MAE=MAE1, rMAE = rMAE1, rsq = rsqd1)
 }
