@@ -23,7 +23,7 @@ error_matrix = function(validation, prediction) {
         IQR = as.vector(a2[5] - a2[2])
         IQR/as.vector(a2[3]) # divided by median
     }
-    Rsquare= <- function(test, pred) {
+    Rsquare <- function(test, pred) {
         1-  var(pred - test)/var(test)
     }
 
