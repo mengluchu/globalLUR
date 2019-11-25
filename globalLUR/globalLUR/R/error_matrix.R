@@ -7,23 +7,35 @@
 
 error_matrix = function(validation, prediction) {
     rmse <- function(test, pred) {
-        RMSE = sqrt(mean((pred - test)^2))
-        RMSE
-        # x= pred - test RMSE <- sqrt(sum(x^2) /length(x))
+         sqrt(mean((pred - test)^2))
     }
     MAE = function(test, pred) {
-        mae = mean(abs(pred - test))
-        mae
+       mean(abs(pred - test))
+
     }
     IQR <- function(test, pred) {
         a2 = summary(as.vector(pred - test))
-        iqr_error = as.vector(a2[5] - a2[2])
-        iqr_error
+        as.vector(a2[5] - a2[2])
+
+    }
+    rIQR <- function(test, pred) {
+        a2 = summary(as.vector(pred - test))
+        IQR = as.vector(a2[5] - a2[2])
+        IQR/as.vector(a2[3]) # divided by median
+    }
+    rrmse <- function(test, pred) {
+         rmse = sqrt(mean((pred - test)^2))
+         rmse/mean(test)
+    }
+    rMAE = function(test, pred) {
+        mean(abs(pred - test))/mean(test)
     }
     rmse1 = rmse(validation, prediction)
-    
+    rrmse1 = rrmse(validation, prediction)
+
     MAE1 = MAE(validation, prediction)
-    
+    rMAE1 = rMAE(validation, prediction)
     IQR1 = IQR(validation, prediction)
-    c(RMSE = rmse1, MAE = MAE1, IQR = IQR1)
+    rIQR1 = rIQR(validation, prediction)
+    c(RMSE = rmse1, RRMSE = rrmase1, IQR = IQR1, rIQR = rIQR1)
 }
